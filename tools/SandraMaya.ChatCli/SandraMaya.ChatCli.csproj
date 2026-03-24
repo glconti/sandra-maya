@@ -1,0 +1,9 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <AssemblyName>sandra-chat</AssemblyName>
+    <RootNamespace>SandraMaya.ChatCli</RootNamespace>
+  </PropertyGroup>
+
+</Project>

@@ -1,10 +1,10 @@
-# Sandra Maya
+# Maya
 
 `.NET 10` Telegram AI assistant with Azure OpenAI function calling, web browsing, job crawling, and self-improvement capabilities. Single-container Coolify deployment.
 
-## What Sandra Maya Can Do
+## What Maya Can Do
 
-Sandra Maya is a personal AI assistant available through Telegram. She can:
+Maya is a personal AI assistant available through Telegram. She can:
 
 - **Remember things** — save notes, search past conversations, maintain context across sessions
 - **Manage your CV** — accept PDF/text CV uploads, parse and store them, use them for applications
@@ -100,6 +100,83 @@ bash ./scripts/install-playwright.sh
 
 The host can start without `Telegram__BotToken`; Telegram polling will be skipped and `/health` will report degraded.
 
+## Chat CLI (`sandra-chat`)
+
+`sandra-chat` is a local CLI tool that lets an AI agent or a human have a live conversation with Maya **without a real Telegram account**. It starts a lightweight mock Telegram Bot API server and launches the real bot pointed at it. Each command is a one-shot subprocess — ideal for AI agent automation.
+
+### Build
+
+```powershell
+dotnet build .\tools\SandraMaya.ChatCli\SandraMaya.ChatCli.csproj
+```
+
+The binary is output to `tools/SandraMaya.ChatCli/bin/Debug/net10.0/sandra-chat.exe`.
+
+### Quick start
+
+```powershell
+# 1. Provide Azure OpenAI credentials with dotnet user-secrets or environment variables
+#    `sandra-chat start` launches the host in Development so dotnet user-secrets are loaded.
+$env:AzureOpenAi__BaseUrl = "https://your-resource.openai.azure.com/"
+$env:AzureOpenAi__ApiKey  = "your-key"
+$env:AzureOpenAi__DeploymentName = "gpt-4o"
+
+# 2. Start the session (from the repo root)
+.\tools\SandraMaya.ChatCli\bin\Debug\net10.0\sandra-chat.exe start
+
+# 3. Send a message and get the bot's reply
+.\tools\SandraMaya.ChatCli\bin\Debug\net10.0\sandra-chat.exe send "What jobs are available in Zurich?"
+
+# 4. Get structured JSON output (useful for AI agent parsing)
+.\tools\SandraMaya.ChatCli\bin\Debug\net10.0\sandra-chat.exe send "Remember my name is Alice" --json
+
+# 5. Review the full conversation
+.\tools\SandraMaya.ChatCli\bin\Debug\net10.0\sandra-chat.exe history
+
+# 6. Stop everything
+.\tools\SandraMaya.ChatCli\bin\Debug\net10.0\sandra-chat.exe stop
+```
+
+### Commands
+
+| Command | Description |
+|---------|-------------|
+| `start [--port N] [--chat-id N] [--user NAME] [--bot-project PATH]` | Start mock server + bot, write session state |
+| `send <message> [--json] [--timeout N]` | Send one message, wait for reply, print and exit |
+| `stop` | Shut down bot and mock server |
+| `status [--json]` | Show running state |
+| `history [--json]` | Print full conversation log |
+
+### How it works
+
+```
+sandra-chat start
+  └─ spawns: sandra-chat serve --port <N>   (mock Telegram API + management API)
+  └─ spawns: dotnet run SandraMaya.Host     (real bot, Telegram__ApiBaseUrl=http://localhost:<N>/)
+
+sandra-chat send "hello"
+  └─ POST /cli/send → server enqueues fake Telegram update
+       → bot long-polls getUpdates → processes message → calls sendMessage
+       → server captures reply → returns to CLI
+  └─ CLI prints reply text, exits 0
+
+sandra-chat stop
+  └─ POST /cli/shutdown + kill PIDs from ~/.sandra-maya-chat/session.json
+```
+
+### For AI agents
+
+Each `send` call returns only the bot reply on stdout (or a JSON envelope with `--json`):
+
+```
+# Plain text — capture as a variable
+$reply = .\sandra-chat.exe send "What is 2+2?"
+# JSON — parse with ConvertFrom-Json
+$result = .\sandra-chat.exe send "Summarise my CV" --json | ConvertFrom-Json
+Write-Host $result.reply
+Write-Host "Took $($result.elapsed_ms) ms"
+```
+
 ## Docker / Coolify
 
 ```bash
@@ -116,7 +193,7 @@ docker build \
 
 ## Self-Improvement
 
-Sandra Maya can extend herself by:
+Maya can extend herself by:
 
 1. Recognizing a need the AI can't fulfill with existing tools
 2. Proposing a new capability (Node.js, Python, or PowerShell script)
@@ -125,6 +202,6 @@ Sandra Maya can extend herself by:
 
 **Safety tiers:**
 - **Auto-enable**: Capabilities with `local-readonly` containment (no network, no writes)
-- **Approval required**: Capabilities needing `networked` or `elevated` containment — Sandra Maya asks the user via Telegram before first execution
+- **Approval required**: Capabilities needing `networked` or `elevated` containment — Maya asks the user via Telegram before first execution
 
 

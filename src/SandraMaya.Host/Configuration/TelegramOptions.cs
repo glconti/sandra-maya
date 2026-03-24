@@ -8,6 +8,8 @@ public sealed class TelegramOptions
 
     public string BotToken { get; init; } = string.Empty;
 
+    public string ApiBaseUrl { get; init; } = "https://api.telegram.org/";
+
     [Range(1, 50)]
     public int PollingTimeoutSeconds { get; init; } = 30;
 

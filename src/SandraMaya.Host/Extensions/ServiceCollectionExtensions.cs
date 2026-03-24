@@ -155,7 +155,7 @@ public static class ServiceCollectionExtensions
 
             services.AddHttpClient<ITelegramBotApiClient, TelegramBotApiClient>(client =>
             {
-                client.BaseAddress = new Uri("https://api.telegram.org/");
+                client.BaseAddress = new Uri(telegramOptions.ApiBaseUrl);
             });
 
             services.AddSingleton<ITelegramUpdateRouter, TelegramUpdateRouter>();
