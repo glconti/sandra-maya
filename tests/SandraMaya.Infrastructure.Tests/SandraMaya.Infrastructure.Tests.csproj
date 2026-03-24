@@ -7,6 +7,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\SandraMaya.Application\SandraMaya.Application.csproj" />
     <ProjectReference Include="..\..\src\SandraMaya.Infrastructure\SandraMaya.Infrastructure.csproj" />
+    <PackageReference Include="AwesomeAssertions" />
   </ItemGroup>
 
 </Project>
