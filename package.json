@@ -1,0 +1,11 @@
+{
+  "name": "sandra-maya",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "postinstall": "playwright install chromium"
+  },
+  "dependencies": {
+    "playwright": "^1.38.0"
+  }
+}

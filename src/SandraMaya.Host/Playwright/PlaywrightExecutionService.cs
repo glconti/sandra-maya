@@ -69,7 +69,7 @@ public sealed class PlaywrightExecutionService : IPlaywrightExecutionService
                 RedirectStandardError = true,
                 UseShellExecute = false,
                 CreateNoWindow = true,
-                WorkingDirectory = _storage.WorkPath
+                WorkingDirectory = AppContext.BaseDirectory
             };
 
             if (!psi.Environment.ContainsKey("PLAYWRIGHT_BROWSERS_PATH"))
