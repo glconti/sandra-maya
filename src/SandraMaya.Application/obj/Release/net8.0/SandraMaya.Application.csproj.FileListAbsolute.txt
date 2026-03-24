@@ -1,0 +1,11 @@
+D:\Repos\sandra-maya\src\SandraMaya.Application\bin\Release\net8.0\SandraMaya.Application.deps.json
+D:\Repos\sandra-maya\src\SandraMaya.Application\bin\Release\net8.0\SandraMaya.Application.dll
+D:\Repos\sandra-maya\src\SandraMaya.Application\bin\Release\net8.0\SandraMaya.Application.pdb
+D:\Repos\sandra-maya\src\SandraMaya.Application\obj\Release\net8.0\SandraMaya.Application.GeneratedMSBuildEditorConfig.editorconfig
+D:\Repos\sandra-maya\src\SandraMaya.Application\obj\Release\net8.0\SandraMaya.Application.AssemblyInfoInputs.cache
+D:\Repos\sandra-maya\src\SandraMaya.Application\obj\Release\net8.0\SandraMaya.Application.AssemblyInfo.cs
+D:\Repos\sandra-maya\src\SandraMaya.Application\obj\Release\net8.0\SandraMaya.Application.csproj.CoreCompileInputs.cache
+D:\Repos\sandra-maya\src\SandraMaya.Application\obj\Release\net8.0\SandraMaya.Application.dll
+D:\Repos\sandra-maya\src\SandraMaya.Application\obj\Release\net8.0\refint\SandraMaya.Application.dll
+D:\Repos\sandra-maya\src\SandraMaya.Application\obj\Release\net8.0\SandraMaya.Application.pdb
+D:\Repos\sandra-maya\src\SandraMaya.Application\obj\Release\net8.0\ref\SandraMaya.Application.dll

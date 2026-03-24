@@ -1,0 +1,12 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/SandraMaya.Application/SandraMaya.Application.csproj" />
+    <Project Path="src/SandraMaya.Capabilities/SandraMaya.Capabilities.csproj" />
+    <Project Path="src/SandraMaya.Host/SandraMaya.Host.csproj" />
+    <Project Path="src/SandraMaya.Infrastructure/SandraMaya.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/SandraMaya.Capabilities.Tests/SandraMaya.Capabilities.Tests.csproj" />
+    <Project Path="tests/SandraMaya.Infrastructure.Tests/SandraMaya.Infrastructure.Tests.csproj" />
+  </Folder>
+</Solution>

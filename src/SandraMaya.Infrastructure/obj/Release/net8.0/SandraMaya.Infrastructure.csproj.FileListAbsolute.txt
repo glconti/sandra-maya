@@ -1,0 +1,15 @@
+D:\Repos\sandra-maya\src\SandraMaya.Infrastructure\bin\Release\net8.0\SandraMaya.Infrastructure.deps.json
+D:\Repos\sandra-maya\src\SandraMaya.Infrastructure\bin\Release\net8.0\SandraMaya.Infrastructure.dll
+D:\Repos\sandra-maya\src\SandraMaya.Infrastructure\bin\Release\net8.0\SandraMaya.Infrastructure.pdb
+D:\Repos\sandra-maya\src\SandraMaya.Infrastructure\bin\Release\net8.0\SandraMaya.Application.dll
+D:\Repos\sandra-maya\src\SandraMaya.Infrastructure\bin\Release\net8.0\SandraMaya.Application.pdb
+D:\Repos\sandra-maya\src\SandraMaya.Infrastructure\obj\Release\net8.0\SandraMaya.Infrastructure.csproj.AssemblyReference.cache
+D:\Repos\sandra-maya\src\SandraMaya.Infrastructure\obj\Release\net8.0\SandraMaya.Infrastructure.GeneratedMSBuildEditorConfig.editorconfig
+D:\Repos\sandra-maya\src\SandraMaya.Infrastructure\obj\Release\net8.0\SandraMaya.Infrastructure.AssemblyInfoInputs.cache
+D:\Repos\sandra-maya\src\SandraMaya.Infrastructure\obj\Release\net8.0\SandraMaya.Infrastructure.AssemblyInfo.cs
+D:\Repos\sandra-maya\src\SandraMaya.Infrastructure\obj\Release\net8.0\SandraMaya.Infrastructure.csproj.CoreCompileInputs.cache
+D:\Repos\sandra-maya\src\SandraMaya.Infrastructure\obj\Release\net8.0\SandraMa.B494B2D6.Up2Date
+D:\Repos\sandra-maya\src\SandraMaya.Infrastructure\obj\Release\net8.0\SandraMaya.Infrastructure.dll
+D:\Repos\sandra-maya\src\SandraMaya.Infrastructure\obj\Release\net8.0\refint\SandraMaya.Infrastructure.dll
+D:\Repos\sandra-maya\src\SandraMaya.Infrastructure\obj\Release\net8.0\SandraMaya.Infrastructure.pdb
+D:\Repos\sandra-maya\src\SandraMaya.Infrastructure\obj\Release\net8.0\ref\SandraMaya.Infrastructure.dll
