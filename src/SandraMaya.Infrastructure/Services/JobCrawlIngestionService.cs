@@ -10,6 +10,8 @@ public sealed class JobCrawlIngestionService(
     IMemoryQueryService memoryQueries,
     JobPostingImportMapper mapper) : IJobCrawlIngestionService
 {
+    private const string UnknownEmployer = "Unknown employer";
+
     public async Task<JobCrawlResult> ImportAsync(JobCrawlDiscoveryBatch batch, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(batch);
@@ -31,11 +33,12 @@ public sealed class JobCrawlIngestionService(
             try
             {
                 Validate(job);
+                var normalizedJob = Normalize(job);
 
                 var seedPosting = mapper.MapPosting(
                     batch.Request.UserProfileId,
                     site.SiteKey,
-                    job,
+                    normalizedJob,
                     descriptionDocumentId: null,
                     lastSeenAtUtc: completedAtUtc);
 
@@ -47,7 +50,7 @@ public sealed class JobCrawlIngestionService(
                 var descriptionDocument = mapper.MapDescriptionDocument(
                     batch.Request.UserProfileId,
                     site.SiteKey,
-                    job,
+                    normalizedJob,
                     existing?.DescriptionDocumentId);
 
                 if (descriptionDocument is not null)
@@ -58,7 +61,7 @@ public sealed class JobCrawlIngestionService(
                 var posting = mapper.MapPosting(
                     batch.Request.UserProfileId,
                     site.SiteKey,
-                    job,
+                    normalizedJob,
                     descriptionDocument?.Id ?? existing?.DescriptionDocumentId,
                     completedAtUtc);
 
@@ -123,6 +126,14 @@ public sealed class JobCrawlIngestionService(
         ArgumentNullException.ThrowIfNull(job);
         ArgumentException.ThrowIfNullOrWhiteSpace(job.SourceUrl);
         ArgumentException.ThrowIfNullOrWhiteSpace(job.Title);
-        ArgumentException.ThrowIfNullOrWhiteSpace(job.CompanyName);
+    }
+
+    private static DiscoveredJobPosting Normalize(DiscoveredJobPosting job)
+    {
+        ArgumentNullException.ThrowIfNull(job);
+
+        return string.IsNullOrWhiteSpace(job.CompanyName)
+            ? job with { CompanyName = UnknownEmployer }
+            : job;
     }
 }

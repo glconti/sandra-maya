@@ -28,7 +28,7 @@ public sealed class JobSiteRegistry : IJobSiteRegistry
             BaseUrl = "https://www.jobagent.ch/",
             SearchUrl = "https://www.jobagent.ch/jobs",
             AuthenticationMode = JobSiteAuthenticationMode.OptionalLogin,
-            DefaultStrategy = JobCrawlStrategyKind.ScriptedHttp,
+            DefaultStrategy = JobCrawlStrategyKind.PlaywrightBrowser,
             SupportedStrategies =
             [
                 JobCrawlStrategyKind.ScriptedHttp,
@@ -40,7 +40,7 @@ public sealed class JobSiteRegistry : IJobSiteRegistry
             SiteKey = "schuljobs-ch",
             DisplayName = "schuljobs.ch",
             BaseUrl = "https://www.schuljobs.ch/",
-            SearchUrl = "https://www.schuljobs.ch/offene-stellen",
+            SearchUrl = "https://www.schuljobs.ch/suche",
             AuthenticationMode = JobSiteAuthenticationMode.AnonymousOnly,
             DefaultStrategy = JobCrawlStrategyKind.ScriptedHttp,
             SupportedStrategies =
@@ -53,10 +53,10 @@ public sealed class JobSiteRegistry : IJobSiteRegistry
         {
             SiteKey = "krippenstellen-ch",
             DisplayName = "krippenstellen.ch",
-            BaseUrl = "https://www.krippenstellen.ch/",
-            SearchUrl = "https://www.krippenstellen.ch/offene-stellen",
+            BaseUrl = "https://krippenstellen.ch/",
+            SearchUrl = "https://krippenstellen.ch/de/inserate",
             AuthenticationMode = JobSiteAuthenticationMode.AnonymousOnly,
-            DefaultStrategy = JobCrawlStrategyKind.ScriptedHttp,
+            DefaultStrategy = JobCrawlStrategyKind.PlaywrightBrowser,
             SupportedStrategies =
             [
                 JobCrawlStrategyKind.ScriptedHttp,

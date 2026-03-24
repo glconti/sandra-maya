@@ -86,7 +86,7 @@ public sealed class WebScreenshotTool : IToolHandler
         }
 
         var script = $$"""
-            const { chromium } = require('playwright');
+            import { chromium } from 'playwright';
             (async () => {
                 let browser;
                 try {

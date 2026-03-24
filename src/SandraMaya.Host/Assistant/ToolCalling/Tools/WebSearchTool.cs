@@ -83,7 +83,7 @@ public sealed class WebSearchTool : IToolHandler
             : $"await page.press({JsonEncode(inputSelector)}, 'Enter');";
 
         var script = $$"""
-            const { chromium } = require('playwright');
+            import { chromium } from 'playwright';
             (async () => {
                 let browser;
                 try {

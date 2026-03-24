@@ -1,6 +1,6 @@
 # Sandra Maya
 
-`.NET 8` Telegram AI assistant with Azure OpenAI function calling, web browsing, job crawling, and self-improvement capabilities. Single-container Coolify deployment.
+`.NET 10` Telegram AI assistant with Azure OpenAI function calling, web browsing, job crawling, and self-improvement capabilities. Single-container Coolify deployment.
 
 ## What Sandra Maya Can Do
 
@@ -111,4 +111,5 @@ Sandra Maya can extend herself by:
 **Safety tiers:**
 - **Auto-enable**: Capabilities with `local-readonly` containment (no network, no writes)
 - **Approval required**: Capabilities needing `networked` or `elevated` containment — Sandra Maya asks the user via Telegram before first execution
+
 

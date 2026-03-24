@@ -23,6 +23,10 @@ public sealed class JobCrawlingFoundationTests
         Assert.Contains(sites, static site => site.SiteKey == "schuljobs-ch");
         Assert.Contains(sites, static site => site.SiteKey == "krippenstellen-ch");
         Assert.Equal("jobs-ch", registry.Find("JOBS-CH")!.SiteKey);
+        Assert.Equal("https://www.schuljobs.ch/suche", registry.Find("schuljobs-ch")!.SearchUrl);
+        Assert.Equal("https://krippenstellen.ch/de/inserate", registry.Find("krippenstellen-ch")!.SearchUrl);
+        Assert.Equal(JobCrawlStrategyKind.PlaywrightBrowser, registry.Find("jobagent-ch")!.DefaultStrategy);
+        Assert.Equal(JobCrawlStrategyKind.PlaywrightBrowser, registry.Find("krippenstellen-ch")!.DefaultStrategy);
     }
 
     [Fact]
@@ -132,5 +136,53 @@ public sealed class JobCrawlingFoundationTests
         Assert.Equal("https://example.com/jobs/123?refresh=1", postings[0].SourceUrl);
         Assert.Single(documents);
         Assert.Contains("Updated description", documents[0].MarkdownContent, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task ImportAsync_UsesFallbackCompanyWhenCrawlerCannotExtractEmployer()
+    {
+        await using var harness = await InfrastructureTestHarness.CreateAsync();
+        await using var scope = harness.Services.CreateAsyncScope();
+        var commands = scope.ServiceProvider.GetRequiredService<IMemoryCommandService>();
+        var queries = scope.ServiceProvider.GetRequiredService<IMemoryQueryService>();
+        var ingestion = scope.ServiceProvider.GetRequiredService<IJobCrawlIngestionService>();
+
+        var user = await commands.SaveUserAsync(new UserProfile
+        {
+            DisplayName = "Sandra",
+            ExternalUserKey = "crawl-missing-company"
+        });
+
+        var request = new JobCrawlRequest
+        {
+            UserProfileId = user.Id,
+            SiteKey = "jobs-ch",
+            Trigger = JobCrawlTriggerKind.ExternalImport
+        };
+
+        var result = await ingestion.ImportAsync(new JobCrawlDiscoveryBatch
+        {
+            Request = request,
+            StrategyKind = JobCrawlStrategyKind.ScriptedHttp,
+            Jobs =
+            [
+                new DiscoveredJobPosting
+                {
+                    SourceUrl = "https://example.com/jobs/unknown-company",
+                    Title = "Primary Teacher",
+                    CompanyName = "",
+                    Location = "Zurich",
+                    RawPayloadJson = """{"title":"Primary Teacher"}"""
+                }
+            ]
+        });
+
+        var postings = await queries.SearchJobPostingsAsync(
+            user.Id,
+            new JobPostingQuery(SearchText: "Primary Teacher", ActiveOnly: false));
+
+        Assert.Equal(JobCrawlRunStatus.Succeeded, result.Status);
+        Assert.Single(postings);
+        Assert.Equal("Unknown employer", postings[0].CompanyName);
     }
 }

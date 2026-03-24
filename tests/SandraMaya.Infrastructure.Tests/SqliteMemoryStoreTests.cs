@@ -94,7 +94,7 @@ Updated teacher profile
         Assert.NotNull(canonical);
         Assert.Equal(2, canonical!.RevisionNumber);
         Assert.Equal(secondDocument.Id, canonical.MarkdownDocumentId);
-        Assert.Single(revisions.Where(static revision => revision.IsCanonical));
+        Assert.Single(revisions, static revision => revision.IsCanonical);
     }
 
     [Fact]

@@ -99,7 +99,7 @@ public sealed class WebExtractStructuredTool : IToolHandler
         }
 
         var script = $$"""
-            const { chromium } = require('playwright');
+            import { chromium } from 'playwright';
             (async () => {
                 let browser;
                 try {

@@ -176,7 +176,7 @@ public sealed class HostPlaywrightJobCrawlStrategy : IJobCrawlStrategy
 
     private static string BuildScript() =>
         """
-        const { chromium } = require('playwright');
+        import { chromium } from 'playwright';
         (async () => {
           const browser = await chromium.launch({ headless: true });
           const page = await browser.newPage();

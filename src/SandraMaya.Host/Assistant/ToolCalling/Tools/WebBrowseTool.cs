@@ -65,7 +65,7 @@ public sealed class WebBrowseTool : IToolHandler
             : "await page.evaluate(() => document.body.innerText)";
 
         var script = $$"""
-            const { chromium } = require('playwright');
+            import { chromium } from 'playwright';
             (async () => {
                 let browser;
                 try {
