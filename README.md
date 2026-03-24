@@ -79,8 +79,23 @@ Storage paths are resolved from `Storage__Root`:
 ## Run Locally
 
 ```powershell
+# Restore and run the host (Windows PowerShell)
 dotnet restore .\src\SandraMaya.Host\SandraMaya.Host.csproj
 dotnet run --project .\src\SandraMaya.Host\SandraMaya.Host.csproj
+```
+
+Before running crawlers or web-based tools, install Playwright and browsers in the repository root:
+
+- Windows (PowerShell):
+
+```powershell
+.\scripts\install-playwright.ps1
+```
+
+- Linux / macOS (bash):
+
+```bash
+bash ./scripts/install-playwright.sh
 ```
 
 The host can start without `Telegram__BotToken`; Telegram polling will be skipped and `/health` will report degraded.
