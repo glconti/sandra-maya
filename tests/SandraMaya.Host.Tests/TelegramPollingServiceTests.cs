@@ -1,4 +1,4 @@
-﻿using Microsoft.Extensions.Logging.Abstractions;
+using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using SandraMaya.Host.Configuration;
 using SandraMaya.Host.Telegram;
@@ -31,8 +31,8 @@ public sealed class TelegramPollingServiceTests
         await router.WaitForUpdateAsync(TimeSpan.FromSeconds(5));
         await service.StopAsync(CancellationToken.None);
 
-        "getUpdates"], apiClient.CallSequence.Take(2.Should().Be(["deleteWebhook"));
-        apiClient.DropPendingUpdates.Should().BeFalse();
+        Assert.Equal(["deleteWebhook", "getUpdates"], apiClient.CallSequence.Take(2));
+        Assert.False(apiClient.DropPendingUpdates);
         Assert.Single(router.Updates);
     }
 
@@ -127,4 +127,3 @@ public sealed class TelegramPollingServiceTests
         }
     }
 }
-

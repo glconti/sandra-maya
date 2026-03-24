@@ -1,4 +1,4 @@
-﻿using System.Text.Json;
+using System.Text.Json;
 using Microsoft.Extensions.Logging.Abstractions;
 using SandraMaya.Application.Abstractions;
 using SandraMaya.Application.Contracts;
@@ -54,8 +54,8 @@ public sealed class PlaywrightScriptGenerationTests
 
         var result = await strategy.CrawlAsync(site, request);
 
-        result.Status.Should().Be(JobCrawlRunStatus.Succeeded);
-        playwright.LastRequest.Should().NotBeNull();
+        Assert.Equal(JobCrawlRunStatus.Succeeded, result.Status);
+        Assert.NotNull(playwright.LastRequest);
         AssertUsesEsmPlaywrightImport(playwright.LastRequest.Script);
     }
 
@@ -80,9 +80,9 @@ public sealed class PlaywrightScriptGenerationTests
             }),
             DefaultContext);
 
-        result.IsError.Should().BeFalse();
-        result.Content.Should().Be("hello");
-        playwright.LastRequest.Should().NotBeNull();
+        Assert.False(result.IsError);
+        Assert.Equal("hello", result.Content);
+        Assert.NotNull(playwright.LastRequest);
         AssertUsesEsmPlaywrightImport(playwright.LastRequest.Script);
     }
 
@@ -110,9 +110,9 @@ public sealed class PlaywrightScriptGenerationTests
             }),
             DefaultContext);
 
-        result.IsError.Should().BeFalse();
+        Assert.False(result.IsError);
         Assert.Contains("first result", result.Content, StringComparison.Ordinal);
-        playwright.LastRequest.Should().NotBeNull();
+        Assert.NotNull(playwright.LastRequest);
         AssertUsesEsmPlaywrightImport(playwright.LastRequest.Script);
     }
 
@@ -141,9 +141,9 @@ public sealed class PlaywrightScriptGenerationTests
             }),
             DefaultContext);
 
-        result.IsError.Should().BeFalse();
+        Assert.False(result.IsError);
         Assert.Contains("Role", result.Content, StringComparison.Ordinal);
-        playwright.LastRequest.Should().NotBeNull();
+        Assert.NotNull(playwright.LastRequest);
         AssertUsesEsmPlaywrightImport(playwright.LastRequest.Script);
     }
 
@@ -190,9 +190,9 @@ public sealed class PlaywrightScriptGenerationTests
                 }),
                 DefaultContext);
 
-            result.IsError.Should().BeFalse();
+            Assert.False(result.IsError);
             Assert.Contains("Screenshot saved to", result.Content, StringComparison.Ordinal);
-            playwright.LastRequest.Should().NotBeNull();
+            Assert.NotNull(playwright.LastRequest);
             AssertUsesEsmPlaywrightImport(playwright.LastRequest.Script);
         }
         finally
@@ -213,10 +213,10 @@ public sealed class PlaywrightScriptGenerationTests
     private static string ExtractJsonStringLiteral(string script, string marker)
     {
         var markerIndex = script.IndexOf(marker, StringComparison.Ordinal);
-        markerIndex >= 0, $"Expected marker '{marker}' in generated script.".Should().BeTrue();
+        Assert.True(markerIndex >= 0, $"Expected marker '{marker}' in generated script.");
 
         var literalStart = script.IndexOf('"', markerIndex + marker.Length);
-        literalStart >= 0, "Expected JSON string literal in generated script.".Should().BeTrue();
+        Assert.True(literalStart >= 0, "Expected JSON string literal in generated script.");
 
         var index = literalStart + 1;
         var escaped = false;
@@ -237,7 +237,7 @@ public sealed class PlaywrightScriptGenerationTests
             }
         }
 
-        index < script.Length, "Generated script contained an unterminated JSON string literal.".Should().BeTrue();
+        Assert.True(index < script.Length, "Generated script contained an unterminated JSON string literal.");
 
         var jsonLiteral = script.Substring(literalStart, index - literalStart + 1);
         return JsonSerializer.Deserialize<string>(jsonLiteral)!;
@@ -283,4 +283,3 @@ public sealed class PlaywrightScriptGenerationTests
         }
     }
 }
-

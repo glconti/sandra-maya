@@ -1,4 +1,4 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection;
 using SandraMaya.Application.Abstractions;
 using SandraMaya.Application.Contracts;
 using SandraMaya.Application.Domain;
@@ -40,10 +40,10 @@ public sealed class JobTrackingServicesTests
             JobApplicationStatus.Interested,
             NotesMarkdown: "Worth reviewing with Sandra before applying."));
 
-        current.IsTracked.Should().BeTrue();
-        current.CurrentStatus.Should().Be(JobApplicationStatus.Interested);
-        current.JobPosting.Id.Should().Be(posting.Id);
-        current.StatusRecord!.NotesMarkdown.Should().Be("Worth reviewing with Sandra before applying.");
+        Assert.True(current.IsTracked);
+        Assert.Equal(JobApplicationStatus.Interested, current.CurrentStatus);
+        Assert.Equal(posting.Id, current.JobPosting.Id);
+        Assert.Equal("Worth reviewing with Sandra before applying.", current.StatusRecord!.NotesMarkdown);
     }
 
     [Fact]
@@ -102,8 +102,8 @@ public sealed class JobTrackingServicesTests
             new JobApplicationListQuery(new[] { JobApplicationStatus.Interested }));
 
         Assert.Single(interestedOnly);
-        interestedOnly[0].JobPosting.Id.Should().Be(interestedPosting.Id);
-        interestedOnly[0].CurrentStatus.Should().Be(JobApplicationStatus.Interested);
+        Assert.Equal(interestedPosting.Id, interestedOnly[0].JobPosting.Id);
+        Assert.Equal(JobApplicationStatus.Interested, interestedOnly[0].CurrentStatus);
     }
 
     [Fact]
@@ -199,19 +199,19 @@ public sealed class JobTrackingServicesTests
             user.Id,
             new DateTimeOffset(2024, 5, 15, 18, 0, 0, TimeSpan.Zero));
 
-        summary.Period.Should().Be(JobActivitySummaryPeriod.Weekly);
-        5, 13, 0, 0, 0, TimeSpan.Zero.Should().Be(new DateTimeOffset(2024), summary.RangeStartUtc);
-        5, 20, 0, 0, 0, TimeSpan.Zero.Should().Be(new DateTimeOffset(2024), summary.RangeEndUtc);
-        summary.JobsDiscovered.Should().Be(2);
-        summary.JobsTracked.Should().Be(2);
-        summary.ApplicationsSubmitted.Should().Be(1);
-        summary.InterviewsAdvanced.Should().Be(1);
-        summary.RejectionsLogged.Should().Be(1);
+        Assert.Equal(JobActivitySummaryPeriod.Weekly, summary.Period);
+        Assert.Equal(new DateTimeOffset(2024, 5, 13, 0, 0, 0, TimeSpan.Zero), summary.RangeStartUtc);
+        Assert.Equal(new DateTimeOffset(2024, 5, 20, 0, 0, 0, TimeSpan.Zero), summary.RangeEndUtc);
+        Assert.Equal(2, summary.JobsDiscovered);
+        Assert.Equal(2, summary.JobsTracked);
+        Assert.Equal(1, summary.ApplicationsSubmitted);
+        Assert.Equal(1, summary.InterviewsAdvanced);
+        Assert.Equal(1, summary.RejectionsLogged);
         Assert.Contains(summary.CurrentStatusCounts, count => count.Status == JobApplicationStatus.Applied && count.Count == 1);
         Assert.Contains(summary.CurrentStatusCounts, count => count.Status == JobApplicationStatus.Rejected && count.Count == 1);
         Assert.Contains(summary.CurrentStatusCounts, count => count.Status == JobApplicationStatus.Interviewing && count.Count == 1);
-        summary.RecentDiscoveries.Count.Should().Be(2);
-        summary.RecentApplicationUpdates.Count.Should().Be(3);
+        Assert.Equal(2, summary.RecentDiscoveries.Count);
+        Assert.Equal(3, summary.RecentApplicationUpdates.Count);
     }
 
     [Fact]
@@ -282,14 +282,13 @@ public sealed class JobTrackingServicesTests
             Tone: "warm",
             Language: "en"));
 
-        draft.IsPlaceholder.Should().BeTrue();
-        draft.CvRevisionId.Should().Be(cvRevision.Id);
-        draft.JobTitle.Should().Be("Primary School Teacher");
-        draft.CompanyName.Should().Be("Lucerne Schools");
+        Assert.True(draft.IsPlaceholder);
+        Assert.Equal(cvRevision.Id, draft.CvRevisionId);
+        Assert.Equal("Primary School Teacher", draft.JobTitle);
+        Assert.Equal("Lucerne Schools", draft.CompanyName);
         Assert.Contains("Focus on classroom leadership.", draft.DraftMarkdown);
         Assert.Contains(posting.SourceUrl, draft.DraftMarkdown);
         Assert.Contains(cvRevision.Id.ToString(), draft.PromptHint);
         Assert.Contains(posting.Id.ToString(), draft.PromptHint);
     }
 }
-

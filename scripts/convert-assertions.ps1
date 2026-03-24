@@ -1,6 +1,4 @@
-# Simple codemod to convert common xUnit Assert usages to AwesomeAssertions fluent style
-# NOTE: This is a best-effort regex-based converter. Review changes manually after running.
-
+# Safer codemod: handle messages and avoid breaking complex expressions
 $root = Split-Path -Parent $MyInvocation.MyCommand.Path
 $testDir = Join-Path $PSScriptRoot "..\tests"
 Write-Host "Scanning $testDir for .cs files..."
@@ -10,26 +8,31 @@ Get-ChildItem -Path $testDir -Recurse -Include *.cs | ForEach-Object {
     $content = Get-Content -Raw -Path $path -Encoding UTF8
     $orig = $content
 
-    # Replace Assert.Equal(expected, actual) => actual.Should().Be(expected)
-    $content = [regex]::Replace($content, 'Assert\.Equal\(([^,\)]+)\s*,\s*([^\)]+)\)', '$2.Should().Be($1)')
-
-    # Replace Assert.NotEqual(expected, actual) => actual.Should().NotBe(expected)
-    $content = [regex]::Replace($content, 'Assert\.NotEqual\(([^,\)]+)\s*,\s*([^\)]+)\)', '$2.Should().NotBe($1)')
-
-    # Replace Assert.True(condition) => condition.Should().BeTrue()
+    # Assert.True with message
+    $content = [regex]::Replace($content, 'Assert\.True\(([^,\)]+)\s*,\s*([^\)]+)\)', '$1.Should().BeTrue($2)')
+    # Assert.True without message
     $content = [regex]::Replace($content, 'Assert\.True\(([^\)]+)\)', '$1.Should().BeTrue()')
 
-    # Replace Assert.False(condition) => condition.Should().BeFalse()
+    # Assert.False with message
+    $content = [regex]::Replace($content, 'Assert\.False\(([^,\)]+)\s*,\s*([^\)]+)\)', '$1.Should().BeFalse($2)')
+    # Assert.False without message
     $content = [regex]::Replace($content, 'Assert\.False\(([^\)]+)\)', '$1.Should().BeFalse()')
 
-    # Replace Assert.Null(obj) => obj.Should().BeNull()
+    # Assert.Null with message
+    $content = [regex]::Replace($content, 'Assert\.Null\(([^,\)]+)\s*,\s*([^\)]+)\)', '$1.Should().BeNull($2)')
+    # Assert.Null without message
     $content = [regex]::Replace($content, 'Assert\.Null\(([^\)]+)\)', '$1.Should().BeNull()')
 
-    # Replace Assert.NotNull(obj) => obj.Should().NotBeNull()
+    # Assert.NotNull with message
+    $content = [regex]::Replace($content, 'Assert\.NotNull\(([^,\)]+)\s*,\s*([^\)]+)\)', '$1.Should().NotBeNull($2)')
+    # Assert.NotNull without message
     $content = [regex]::Replace($content, 'Assert\.NotNull\(([^\)]+)\)', '$1.Should().NotBeNull()')
 
-    # Replace Assert.Throws<ExceptionType>(() => action) => (() => action).Should().Throw<ExceptionType>()
-    $content = [regex]::Replace($content, 'Assert\.Throws<([^>]+)>\(([^\)]+)\)', '$2.Should().Throw<$1>()')
+    # Assert.Throws<T>( () => action ) => (() => action).Should().Throw<T>()
+    $content = [regex]::Replace($content, 'Assert\.Throws<([^>]+)>\(([^\)]+)\)', '($2).Should().Throw<$1>()')
+
+    # Cautiously handle Assert.Equal when first arg is a simple token or literal (no parentheses, commas)
+    $content = [regex]::Replace($content, 'Assert\.Equal\(([^,\)\(\"]+|\"[^\"]*\")\s*,\s*([^\)]+)\)', '$2.Should().Be($1)')
 
     if ($content -ne $orig) {
         Write-Host "Updating $path"
@@ -37,4 +40,4 @@ Get-ChildItem -Path $testDir -Recurse -Include *.cs | ForEach-Object {
     }
 }
 
-Write-Host "Conversion complete. Please review changes and run tests."
+Write-Host "Conversion complete. Please review changes and run tests." 

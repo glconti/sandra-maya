@@ -1,1 +1,1 @@
-global using AwesomeAssertions;
+global using FluentAssertions;

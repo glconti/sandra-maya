@@ -1,4 +1,4 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection;
 using SandraMaya.Application.Abstractions;
 using SandraMaya.Application.Contracts;
 using SandraMaya.Application.Domain;
@@ -41,12 +41,12 @@ public sealed class CvIngestionServiceTests
         var canonical = await queries.GetCanonicalCvRevisionAsync(user.Id);
         var assets = await queries.GetAssetsAsync(user.Id);
 
-        canonical.Should().NotBeNull();
-        canonical!.Id.Should().Be(result.CvRevision.Id);
-        assets.Count.Should().Be(2);
+        Assert.NotNull(canonical);
+        Assert.Equal(result.CvRevision.Id, canonical!.Id);
+        Assert.Equal(2, assets.Count);
         Assert.Contains(assets, static asset => asset.Role == AssetRole.CvUpload);
         Assert.Contains(assets, static asset => asset.Role == AssetRole.MarkdownArtifact);
-        result.MarkdownDocument.Kind.Should().Be(DocumentKind.Cv);
+        Assert.Equal(DocumentKind.Cv, result.MarkdownDocument.Kind);
     }
 
     private sealed class FakePdfConverter : IPdfToMarkdownConverter
@@ -62,4 +62,3 @@ Experienced kindergarten teacher in Zurich
         }
     }
 }
-
