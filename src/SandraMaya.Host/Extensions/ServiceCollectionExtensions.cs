@@ -1,12 +1,20 @@
 using Microsoft.Extensions.Options;
+using SandraMaya.Application.Abstractions;
+using SandraMaya.Application.Contracts;
 using SandraMaya.Capabilities.Abstractions;
 using SandraMaya.Capabilities.Configuration;
 using SandraMaya.Capabilities.Persistence;
 using SandraMaya.Capabilities.Services;
 using SandraMaya.Infrastructure;
 using SandraMaya.Host.Assistant;
+using SandraMaya.Host.Assistant.ToolCalling;
+using SandraMaya.Host.Assistant.ToolCalling.Tools;
 using SandraMaya.Host.Configuration;
 using SandraMaya.Host.Health;
+using SandraMaya.Host.Jobs;
+using SandraMaya.Host.Mcp;
+using SandraMaya.Host.Playwright;
+using SandraMaya.Host.Services;
 using SandraMaya.Host.Storage;
 using SandraMaya.Host.Telegram;
 
@@ -64,6 +72,9 @@ public static class ServiceCollectionExtensions
             sp => sp.GetRequiredService<StorageLayout>().SqlitePath,
             sp => sp.GetRequiredService<StorageLayout>().UploadsPath);
 
+        // Override the placeholder cover letter service with the real AI-powered one
+        services.AddScoped<ICoverLetterDraftService, AzureOpenAiCoverLetterDraftService>();
+
         services.AddSingleton(sp =>
         {
             var options = sp.GetRequiredService<IOptions<RuntimeOptions>>().Value;
@@ -88,8 +99,54 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<ICapabilityActivityService, CapabilityActivityService>();
         services.AddSingleton<ICapabilityExecutionPlanResolver, CapabilityExecutionPlanResolver>();
 
+        // MCP client manager (stub — config management only)
+        services.AddSingleton<McpClientManager>();
+
+        // User resolution
+        services.AddScoped<IUserResolutionService, UserResolutionService>();
+
+        // Playwright execution service
+        services.AddSingleton<IPlaywrightExecutionService, PlaywrightExecutionService>();
+
+        // Memory & CV tools
+        services.AddScoped<IToolHandler, MemorySaveNoteTool>();
+        services.AddScoped<IToolHandler, MemorySearchTool>();
+        services.AddScoped<IToolHandler, MemoryGetCvTool>();
+        services.AddScoped<IToolHandler, CvIngestTool>();
+
+        // Job tools
+        services.AddSingleton<IToolHandler, JobListSitesTool>();
+        services.AddScoped<IToolHandler, JobSearchSavedTool>();
+        services.AddScoped<IToolHandler, JobCrawlTool>();
+        services.AddScoped<IToolHandler, JobTrackApplicationTool>();
+        services.AddScoped<IToolHandler, JobListApplicationsTool>();
+        services.AddScoped<IToolHandler, JobActivitySummaryTool>();
+
+        // Cover letter tool
+        services.AddScoped<IToolHandler, CoverLetterDraftTool>();
+
+        // Web interaction tools (Playwright-based)
+        services.AddSingleton<IToolHandler, WebBrowseTool>();
+        services.AddSingleton<IToolHandler, WebSearchTool>();
+        services.AddSingleton<IToolHandler, WebExtractStructuredTool>();
+        services.AddSingleton<IToolHandler, WebScreenshotTool>();
+
+        // Capability tools
+        services.AddScoped<IToolHandler, CapabilityListTool>();
+        services.AddScoped<IToolHandler, CapabilityProposeTool>();
+        services.AddScoped<IToolHandler, CapabilityExecuteTool>();
+
+        // MCP management tools
+        services.AddSingleton<IToolHandler, McpListServersTool>();
+        services.AddSingleton<IToolHandler, McpAddServerTool>();
+        services.AddSingleton<IToolHandler, McpRemoveServerTool>();
+
+        services.AddScoped<ToolRegistry>();
+        services.AddScoped<SystemPromptBuilder>();
+
+        services.AddSingleton<ConversationHistoryStore>();
         services.AddSingleton<IAssistantSessionStore, InMemoryAssistantSessionStore>();
-        services.AddSingleton<IAssistantOrchestrator, AzureOpenAiAssistantOrchestrator>();
+        services.AddScoped<IAssistantOrchestrator, AzureOpenAiAssistantOrchestrator>();
         services.AddHostedService<StorageBootstrapService>();
 
         if (!string.IsNullOrWhiteSpace(telegramOptions.BotToken))
@@ -107,6 +164,21 @@ public static class ServiceCollectionExtensions
             services.AddSingleton<ITelegramMessageMapper, TelegramMessageMapper>();
             services.AddHostedService<TelegramPollingService>();
         }
+
+        // Replace Infrastructure stub crawl strategies with real Host implementations
+        var playwrightStub = services.FirstOrDefault(d =>
+            d.ServiceType == typeof(IJobCrawlStrategy) &&
+            d.ImplementationType?.Name == "PlaywrightJobCrawlStrategy");
+        if (playwrightStub != null) services.Remove(playwrightStub);
+
+        var httpStub = services.FirstOrDefault(d =>
+            d.ServiceType == typeof(IJobCrawlStrategy) &&
+            d.ImplementationType?.Name == "ScriptedHttpJobCrawlStrategy");
+        if (httpStub != null) services.Remove(httpStub);
+
+        services.AddScoped<IJobCrawlStrategy, HostPlaywrightJobCrawlStrategy>();
+        services.AddScoped<IJobCrawlStrategy, HostScriptedHttpJobCrawlStrategy>();
+        services.AddHttpClient("JobCrawler");
 
         services
             .AddHealthChecks()

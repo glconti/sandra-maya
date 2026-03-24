@@ -2,23 +2,25 @@ namespace SandraMaya.Host.Assistant;
 
 public sealed class AssistantMessageRouter : IInboundMessageRouter
 {
-    private readonly IAssistantOrchestrator _assistantOrchestrator;
+    private readonly IServiceScopeFactory _scopeFactory;
     private readonly IOutboundMessageDispatcher _outboundMessageDispatcher;
     private readonly ILogger<AssistantMessageRouter> _logger;
 
     public AssistantMessageRouter(
-        IAssistantOrchestrator assistantOrchestrator,
+        IServiceScopeFactory scopeFactory,
         IOutboundMessageDispatcher outboundMessageDispatcher,
         ILogger<AssistantMessageRouter> logger)
     {
-        _assistantOrchestrator = assistantOrchestrator;
+        _scopeFactory = scopeFactory;
         _outboundMessageDispatcher = outboundMessageDispatcher;
         _logger = logger;
     }
 
     public async Task RouteAsync(InboundMessage message, CancellationToken cancellationToken)
     {
-        var result = await _assistantOrchestrator.ProcessAsync(message, cancellationToken);
+        using var scope = _scopeFactory.CreateScope();
+        var orchestrator = scope.ServiceProvider.GetRequiredService<IAssistantOrchestrator>();
+        var result = await orchestrator.ProcessAsync(message, cancellationToken);
 
         if (result.Replies.Count == 0)
         {

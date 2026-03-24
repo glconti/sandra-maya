@@ -3,7 +3,7 @@
 ARG DOTNET_VERSION=8.0
 
 FROM mcr.microsoft.com/dotnet/aspnet:${DOTNET_VERSION}-bookworm-slim AS runtime-base
-ARG INSTALL_PLAYWRIGHT_BROWSERS=false
+ARG INSTALL_PLAYWRIGHT_BROWSERS=true
 
 ENV DEBIAN_FRONTEND=noninteractive \
     APP_HOME=/app \

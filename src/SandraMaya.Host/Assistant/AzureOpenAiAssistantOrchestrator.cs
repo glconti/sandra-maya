@@ -1,10 +1,11 @@
 using System.ClientModel;
-using System.Collections.Concurrent;
 using System.Text;
+using System.Text.Json;
 using Azure;
 using Azure.AI.OpenAI;
 using Microsoft.Extensions.Options;
 using OpenAI.Chat;
+using SandraMaya.Host.Assistant.ToolCalling;
 using SandraMaya.Host.Configuration;
 using UglyToad.PdfPig;
 using UglyToad.PdfPig.Content;
@@ -13,26 +14,30 @@ namespace SandraMaya.Host.Assistant;
 
 public sealed class AzureOpenAiAssistantOrchestrator : IAssistantOrchestrator
 {
-    private const string SystemPrompt =
-        "You are Sandra Maya, a personal AI assistant available through Telegram. " +
-        "You are helpful, concise, and friendly. " +
-        "You assist your user with job searching in the Zurich area (Switzerland), CV management, " +
-        "job application tracking, and any other personal tasks they bring to you. " +
-        "You remember the full conversation history within this session. " +
-        "When the user sends you a file (like a PDF CV), acknowledge it and let them know what you can do with it. " +
-        "Respond in the same language the user writes in.";
+    private const int MaxToolIterations = 10;
 
     private readonly IAssistantSessionStore _sessionStore;
+    private readonly ToolRegistry _toolRegistry;
+    private readonly IUserResolutionService _userResolution;
+    private readonly SystemPromptBuilder _systemPromptBuilder;
+    private readonly ConversationHistoryStore _historyStore;
     private readonly AzureOpenAiOptions _options;
     private readonly ILogger<AzureOpenAiAssistantOrchestrator> _logger;
-    private readonly ConcurrentDictionary<string, List<ChatMessage>> _histories = new();
 
     public AzureOpenAiAssistantOrchestrator(
         IAssistantSessionStore sessionStore,
+        ToolRegistry toolRegistry,
+        IUserResolutionService userResolution,
+        SystemPromptBuilder systemPromptBuilder,
+        ConversationHistoryStore historyStore,
         IOptions<AzureOpenAiOptions> options,
         ILogger<AzureOpenAiAssistantOrchestrator> logger)
     {
         _sessionStore = sessionStore;
+        _toolRegistry = toolRegistry;
+        _userResolution = userResolution;
+        _systemPromptBuilder = systemPromptBuilder;
+        _historyStore = historyStore;
         _options = options.Value;
         _logger = logger;
     }
@@ -47,17 +52,20 @@ public sealed class AzureOpenAiAssistantOrchestrator : IAssistantOrchestrator
         }
 
         var session = await _sessionStore.GetOrCreateAsync(message.Conversation, cancellationToken);
+        var userId = await _userResolution.ResolveUserIdAsync(message.Sender, cancellationToken);
 
         _logger.LogInformation(
-            "Processing inbound message {MessageId} for session {SessionId}.",
+            "Processing inbound message {MessageId} for session {SessionId} (user {UserId}).",
             message.MessageId,
-            session.SessionId);
+            session.SessionId,
+            userId);
 
-        var history = _histories.GetOrAdd(session.SessionId, _ => new List<ChatMessage>());
+        var history = _historyStore.GetOrCreate(session.SessionId);
 
         if (history.Count == 0)
         {
-            history.Add(new SystemChatMessage(SystemPrompt));
+            var systemPrompt = await _systemPromptBuilder.BuildAsync(userId, cancellationToken);
+            history.Add(new SystemChatMessage(systemPrompt));
         }
 
         var userText = ResolveUserText(message);
@@ -70,8 +78,67 @@ public sealed class AzureOpenAiAssistantOrchestrator : IAssistantOrchestrator
                 new AzureKeyCredential(_options.ApiKey!));
 
             var chatClient = client.GetChatClient(_options.DeploymentName!);
-            var response = await chatClient.CompleteChatAsync(history, cancellationToken: cancellationToken);
-            var replyText = response.Value.Content[0].Text;
+
+            var options = new ChatCompletionOptions();
+            foreach (var tool in _toolRegistry.GetChatTools())
+            {
+                options.Tools.Add(tool);
+            }
+
+            var completion = (await chatClient.CompleteChatAsync(history, options, cancellationToken)).Value;
+
+            var context = new ToolExecutionContext(userId, session.SessionId, message);
+            var iterations = 0;
+
+            while (completion.FinishReason == ChatFinishReason.ToolCalls && iterations < MaxToolIterations)
+            {
+                history.Add(new AssistantChatMessage(completion));
+
+                foreach (var toolCall in completion.ToolCalls)
+                {
+                    _logger.LogInformation(
+                        "Executing tool {ToolName} (call {ToolCallId}) in session {SessionId}, iteration {Iteration}.",
+                        toolCall.FunctionName, toolCall.Id, session.SessionId, iterations + 1);
+
+                    var handler = _toolRegistry.GetHandler(toolCall.FunctionName);
+                    if (handler is null)
+                    {
+                        _logger.LogWarning("Unknown tool requested: {ToolName}", toolCall.FunctionName);
+                        history.Add(new ToolChatMessage(toolCall.Id,
+                            $"Error: unknown tool '{toolCall.FunctionName}'."));
+                        continue;
+                    }
+
+                    try
+                    {
+                        var args = JsonDocument.Parse(toolCall.FunctionArguments).RootElement;
+                        var result = await handler.ExecuteAsync(args, context, cancellationToken);
+                        history.Add(new ToolChatMessage(toolCall.Id, result.Content));
+                    }
+                    catch (Exception toolEx)
+                    {
+                        _logger.LogError(toolEx,
+                            "Tool {ToolName} threw an exception in session {SessionId}.",
+                            toolCall.FunctionName, session.SessionId);
+                        history.Add(new ToolChatMessage(toolCall.Id,
+                            $"Error executing tool: {toolEx.Message}"));
+                    }
+                }
+
+                completion = (await chatClient.CompleteChatAsync(history, options, cancellationToken)).Value;
+                iterations++;
+            }
+
+            if (iterations >= MaxToolIterations)
+            {
+                _logger.LogWarning(
+                    "Reached max tool iterations ({Max}) for session {SessionId}.",
+                    MaxToolIterations, session.SessionId);
+            }
+
+            var replyText = completion.Content.Count > 0 && completion.Content[0].Text is not null
+                ? completion.Content[0].Text
+                : "I completed the requested actions.";
 
             history.Add(new AssistantChatMessage(replyText));
 

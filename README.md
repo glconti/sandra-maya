@@ -1,86 +1,114 @@
 # Sandra Maya
 
-`.NET`-first Telegram assistant host foundation for a single-container Coolify deployment.
+`.NET 8` Telegram AI assistant with Azure OpenAI function calling, web browsing, job crawling, and self-improvement capabilities. Single-container Coolify deployment.
 
-## What is included
+## What Sandra Maya Can Do
 
-- ASP.NET Core host with DI and health checks
-- configuration binding for Telegram and Azure OpenAI BYOK settings
-- Telegram long-polling intake
-- update routing and inbound message mapping abstractions
-- placeholder assistant orchestrator with in-memory session tracking
-- outbound Telegram message dispatcher
-- SQLite-backed memory foundation for users, assistant profile state, uploaded assets, CV revisions, Markdown documents, structured profile snapshots, and normalized job postings
-- job crawling foundation with a site registry, crawl strategy abstractions, and import-ready normalization for `jobs-ch`, `jobagent-ch`, `schuljobs-ch`, and `krippenstellen-ch`
-- local file storage abstraction for uploads and generated artifacts plus a pluggable PDF-to-Markdown conversion service
+Sandra Maya is a personal AI assistant available through Telegram. She can:
 
-## Project layout
+- **Remember things** — save notes, search past conversations, maintain context across sessions
+- **Manage your CV** — accept PDF/text CV uploads, parse and store them, use them for applications
+- **Search for jobs** — crawl Swiss job sites (jobs.ch, jobagent.ch, schuljobs.ch, krippenstellen.ch) using Playwright browser automation
+- **Track job applications** — log which jobs you've applied to, track status (Applied → Interviewing → Offer → etc.)
+- **Write cover letters** — generate AI-powered cover letters tailored to specific job postings using your CV
+- **Browse the web** — navigate any website, extract content, take screenshots, search for information
+- **Self-improve** — propose and install new capabilities as Node.js/Python/PowerShell scripts
+- **Connect to MCP servers** — extend functionality by connecting to Model Context Protocol servers
 
-- `src\SandraMaya.Application` — domain models, contracts, and memory/file-ingestion abstractions
-- `src\SandraMaya.Infrastructure` — SQLite persistence, file storage, PDF conversion, and retrieval services
-- `src\SandraMaya.Host` — main host/orchestrator service
+## Architecture
+
+The assistant uses Azure OpenAI's function calling (tool use) to bridge AI reasoning with real actions:
+
+```
+User (Telegram) → Message Router → Orchestrator → Azure OpenAI (with tools)
+                                        ↕
+                              Tool Registry (20+ tools)
+                                        ↕
+                    Memory / Jobs / Web / Capabilities / MCP
+```
+
+### Available Tools
+
+| Category | Tools | Description |
+|----------|-------|-------------|
+| Memory | `memory_save_note`, `memory_search`, `memory_get_cv` | Long-term memory operations |
+| CV | `cv_ingest` | Process CV from message attachments |
+| Jobs | `job_list_sites`, `job_search_saved`, `job_crawl`, `job_track_application`, `job_list_applications`, `job_activity_summary` | Job search and tracking |
+| Cover Letter | `cover_letter_draft` | AI-powered cover letter generation |
+| Web | `web_browse`, `web_search`, `web_extract_structured`, `web_screenshot` | Playwright-based web interaction |
+| Capabilities | `capability_list`, `capability_propose`, `capability_execute` | Self-improvement lifecycle |
+| MCP | `mcp_list_servers`, `mcp_add_server`, `mcp_remove_server` | MCP server management |
+
+## Project Layout
+
+- `src/SandraMaya.Application` — domain models, contracts, and abstractions
+- `src/SandraMaya.Infrastructure` — SQLite persistence, file storage, PDF conversion
+- `src/SandraMaya.Capabilities` — capability registry, execution, and activity tracking
+- `src/SandraMaya.Host` — ASP.NET Core host, orchestrator, tool handlers, Playwright integration
 
 ## Configuration
 
-Set these environment variables before running:
+### Required
 
-- `Telegram__BotToken`
-- `AzureOpenAi__BaseUrl`
-- `AzureOpenAi__ApiKey`
-- `AzureOpenAi__DeploymentName`
-- `Storage__Root` (defaults to `App_Data` locally, use `/data` in containers)
+| Variable | Description |
+|----------|-------------|
+| `Telegram__BotToken` | Telegram Bot API token |
+| `AzureOpenAi__BaseUrl` | Azure OpenAI endpoint URL |
+| `AzureOpenAi__ApiKey` | Azure OpenAI API key |
+| `AzureOpenAi__DeploymentName` | Model deployment name (e.g., `gpt-4o`) |
 
-For local development, the host can start without `Telegram__BotToken`; Telegram polling will be skipped and `/health` will report degraded configuration instead of failing startup.
+### Optional
 
-The current transport is long polling only. On startup, the host clears any previously configured Telegram webhook so `getUpdates` can receive messages again without manual BotFather cleanup.
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `Storage__Root` | `App_Data` (local), `/data` (container) | Root storage path |
+| `AzureOpenAi__ProviderType` | `azure` | Provider type |
+| `AzureOpenAi__ApiVersion` | `2024-10-21` | API version |
+| `Runtime__NodeCommand` | `node` | Node.js binary path |
+| `Runtime__PythonCommand` | `python` | Python binary path |
+| `Runtime__PlaywrightCommand` | `node` | Playwright CLI path |
 
-Optional Azure settings:
+Storage paths are resolved from `Storage__Root`:
+- `Storage__SqlitePath` — SQLite database
+- `Storage__UploadsPath` — uploaded files
+- `Storage__CapabilitiesPath` — capability registry
+- `Storage__GeneratedCapabilitiesPath` — AI-generated capability scripts
+- `Storage__WorkPath` — working directory for Playwright scripts
+- `Storage__TempPath` — temporary files
 
-- `AzureOpenAi__ProviderType` (`azure` by default)
-- `AzureOpenAi__ApiVersion` (`2024-10-21` by default for native Azure hosts)
-- `AzureOpenAi__WireApi` (`responses` for GPT-5-style OpenAI-compatible endpoints)
-
-Storage paths are resolved from `Storage__Root` unless an absolute override is supplied:
-
-- `Storage__SqlitePath` (default `sqlite/sandra-maya.db`)
-- `Storage__UploadsPath` (default `files`)
-- `Storage__CapabilitiesPath` (default `capabilities`)
-- `Storage__GeneratedCapabilitiesPath` (default `capabilities/generated`)
-- `Storage__WorkPath` (default `work`)
-- `Storage__TempPath` (default `tmp`)
-- `Storage__CapabilityRegistryFileName` (default `capability-registry.json`)
-
-The memory/document store and file-ingestion pipeline use this same `Storage__*` tree; there is no separate `Memory__*` or `FileStorage__*` path configuration.
-
-Capability execution plans also use configurable runtime commands:
-
-- `Runtime__DotNetCommand` (default `dotnet`)
-- `Runtime__NodeCommand` (default `node`)
-- `Runtime__PlaywrightCommand` (default `node`)
-- `Runtime__PythonCommand` (default `python`)
-- `Runtime__PowerShellCommand` (default `pwsh`)
-- `Runtime__BashCommand` (default `bash`)
-
-## Run
+## Run Locally
 
 ```powershell
 dotnet restore .\src\SandraMaya.Host\SandraMaya.Host.csproj
 dotnet run --project .\src\SandraMaya.Host\SandraMaya.Host.csproj
 ```
 
-Health endpoint:
-
-- `GET /health`
+The host can start without `Telegram__BotToken`; Telegram polling will be skipped and `/health` will report degraded.
 
 ## Docker / Coolify
 
-- Build with `docker build --build-arg PROJECT_PATH=src/SandraMaya.Host/SandraMaya.Host.csproj -t sandra-maya .`
-- The image is single-container: ASP.NET Core host, Telegram polling worker, Node.js, Python, and optional Playwright browsers all run in one container.
-- Mount a persistent Coolify volume at `/data` for SQLite, uploads, capability registry data, generated capabilities, work files, and temp files.
-- The host bootstraps the storage tree on startup, creates the SQLite file if it does not exist yet, and stores the capability registry under `Storage__CapabilitiesPath`.
-- Override `Runtime__*Command` only when your deployment needs non-default binary names or wrappers.
-- Set `INSTALL_PLAYWRIGHT_BROWSERS=true` at build time only when browser automation is required.
-- Container health is available at `GET /health` on port `8080`.
+```bash
+docker build \
+  --build-arg PROJECT_PATH=src/SandraMaya.Host/SandraMaya.Host.csproj \
+  -t sandra-maya .
+```
 
-Current orchestrator behavior is intentionally a placeholder. It accepts Telegram text/files, creates or reuses an in-memory assistant session, and sends a diagnostic reply so future Copilot SDK/Azure orchestration can be plugged in cleanly.
+- Single container: ASP.NET Core + Telegram polling + Node.js + Python + Playwright Chromium
+- Mount a persistent volume at `/data` for SQLite, uploads, and capabilities
+- Playwright browsers are installed by default (`INSTALL_PLAYWRIGHT_BROWSERS=true`)
+- Health check: `GET /health` on port `8080`
+- Set `INSTALL_PLAYWRIGHT_BROWSERS=false` at build time to skip browser installation (disables web browsing tools)
+
+## Self-Improvement
+
+Sandra Maya can extend herself by:
+
+1. Recognizing a need the AI can't fulfill with existing tools
+2. Proposing a new capability (Node.js, Python, or PowerShell script)
+3. Registering the capability in the registry
+4. Executing it on future requests
+
+**Safety tiers:**
+- **Auto-enable**: Capabilities with `local-readonly` containment (no network, no writes)
+- **Approval required**: Capabilities needing `networked` or `elevated` containment — Sandra Maya asks the user via Telegram before first execution
 
