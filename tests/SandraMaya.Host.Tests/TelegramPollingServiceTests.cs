@@ -84,7 +84,7 @@ public sealed class TelegramPollingServiceTests
             return WaitForCancellationAsync(cancellationToken);
         }
 
-        public Task SendMessageAsync(long chatId, string text, CancellationToken cancellationToken) =>
+        public Task SendMessageAsync(long chatId, string text, string? parseMode, CancellationToken cancellationToken) =>
             Task.CompletedTask;
 
         public Task<TelegramFile?> GetFileAsync(string fileId, CancellationToken cancellationToken) =>

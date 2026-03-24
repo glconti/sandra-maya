@@ -26,6 +26,10 @@ public sealed class TelegramOutboundMessageDispatcher : IOutboundMessageDispatch
                 $"Conversation id '{message.Conversation.ConversationId}' is not a valid Telegram chat id.");
         }
 
-        return _telegramBotApiClient.SendMessageAsync(chatId, message.Text, cancellationToken);
+        return _telegramBotApiClient.SendMessageAsync(
+            chatId,
+            TelegramMarkdownToHtmlConverter.Convert(message.Text),
+            parseMode: "HTML",
+            cancellationToken);
     }
 }

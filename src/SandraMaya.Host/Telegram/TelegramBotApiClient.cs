@@ -66,12 +66,13 @@ public sealed class TelegramBotApiClient : ITelegramBotApiClient
         return await ReadResponseAsync<List<TelegramUpdate>>(response, cancellationToken) ?? [];
     }
 
-    public async Task SendMessageAsync(long chatId, string text, CancellationToken cancellationToken)
+    public async Task SendMessageAsync(long chatId, string text, string? parseMode, CancellationToken cancellationToken)
     {
         var request = new TelegramSendMessageRequest
         {
             ChatId = chatId,
-            Text = text
+            Text = text,
+            ParseMode = parseMode
         };
 
         using var response = await _httpClient.PostAsJsonAsync(

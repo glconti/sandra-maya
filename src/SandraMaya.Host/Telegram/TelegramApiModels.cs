@@ -222,4 +222,7 @@ internal sealed class TelegramSendMessageRequest
 
     [JsonPropertyName("text")]
     public string Text { get; init; } = string.Empty;
+
+    [JsonPropertyName("parse_mode")]
+    public string? ParseMode { get; init; }
 }

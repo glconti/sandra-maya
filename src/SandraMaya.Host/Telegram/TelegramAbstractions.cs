@@ -13,7 +13,7 @@ public interface ITelegramBotApiClient
         IReadOnlyList<string> allowedUpdates,
         CancellationToken cancellationToken);
 
-    Task SendMessageAsync(long chatId, string text, CancellationToken cancellationToken);
+    Task SendMessageAsync(long chatId, string text, string? parseMode, CancellationToken cancellationToken);
 
     Task<TelegramFile?> GetFileAsync(string fileId, CancellationToken cancellationToken);
 
