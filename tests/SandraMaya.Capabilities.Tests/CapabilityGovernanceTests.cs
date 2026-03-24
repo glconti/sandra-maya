@@ -1,4 +1,4 @@
-using SandraMaya.Capabilities;
+﻿using SandraMaya.Capabilities;
 using SandraMaya.Capabilities.Abstractions;
 using SandraMaya.Capabilities.Configuration;
 using SandraMaya.Capabilities.Models;
@@ -25,11 +25,11 @@ public sealed class CapabilityGovernanceTests
             permissions: new CapabilityPermissionSet([CapabilityPermission.FileSystemRead], ContainmentBoundary: "local-readonly"),
             description: "Built-in Telegram message dispatcher"));
 
-        Assert.Equal(CapabilityKind.BuiltIn, capability.Source.Kind);
-        Assert.Equal(CapabilityStatus.Enabled, capability.Status);
-        Assert.Equal(CapabilityState.Ready, capability.State);
+        capability.Source.Kind.Should().Be(CapabilityKind.BuiltIn);
+        capability.Status.Should().Be(CapabilityStatus.Enabled);
+        capability.State.Should().Be(CapabilityState.Ready);
         Assert.Equal(clock.GetUtcNow(), capability.Timestamps.CreatedAt);
-        Assert.Equal(@"capabilities\builtins\telegram", capability.InstallPath);
+        capability.InstallPath.Should().Be(@"capabilities\builtins\telegram");
     }
 
     [Fact]
@@ -58,12 +58,12 @@ public sealed class CapabilityGovernanceTests
         clock.Advance(TimeSpan.FromMinutes(1));
         var removed = await registry.RemoveAsync("job.crawler");
 
-        Assert.Equal(CapabilityStatus.Enabled, enabled.Status);
+        enabled.Status.Should().Be(CapabilityStatus.Enabled);
         Assert.Equal(clock.GetUtcNow() - TimeSpan.FromMinutes(2), enabled.Timestamps.EnabledAt);
-        Assert.Equal(CapabilityStatus.Disabled, disabled.Status);
+        disabled.Status.Should().Be(CapabilityStatus.Disabled);
         Assert.Equal(clock.GetUtcNow() - TimeSpan.FromMinutes(1), disabled.Timestamps.DisabledAt);
-        Assert.Equal(CapabilityStatus.Removed, removed.Status);
-        Assert.Equal(CapabilityState.Removed, removed.State);
+        removed.Status.Should().Be(CapabilityStatus.Removed);
+        removed.State.Should().Be(CapabilityState.Removed);
         Assert.Equal(clock.GetUtcNow(), removed.Timestamps.RemovedAt);
     }
 
@@ -101,11 +101,11 @@ public sealed class CapabilityGovernanceTests
         var capability = await registry.GetAsync("jobs.summary");
         var history = await activity.GetExecutionHistoryAsync("jobs.summary");
 
-        Assert.NotNull(capability);
-        Assert.Equal(CapabilityHealthStatus.Healthy, capability!.Health.Status);
-        Assert.Equal(CapabilityState.Ready, capability.State);
+        capability.Should().NotBeNull();
+        capability!.Health.Status.Should().Be(CapabilityHealthStatus.Healthy);
+        capability.State.Should().Be(CapabilityState.Ready);
         Assert.Single(history);
-        Assert.Equal("exec-1", history[0].ExecutionId);
+        history[0].ExecutionId.Should().Be("exec-1");
     }
 
     [Fact]
@@ -135,11 +135,11 @@ public sealed class CapabilityGovernanceTests
 
         var plan = await resolver.ResolveAsync("crawler.playwright");
 
-        Assert.Equal("node", plan.Command);
-        Assert.Equal(@"capabilities\generated\crawler-playwright", plan.WorkingDirectory);
-        Assert.Equal(@"capabilities\generated\crawler-playwright\dist\index.js", plan.Arguments[0]);
-        Assert.Equal("elevated", plan.ContainmentProfile);
-        Assert.True(plan.RequiresApproval);
+        plan.Command.Should().Be("node");
+        plan.WorkingDirectory.Should().Be(@"capabilities\generated\crawler-playwright");
+        plan.Arguments[0].Should().Be(@"capabilities\generated\crawler-playwright\dist\index.js");
+        plan.ContainmentProfile.Should().Be("elevated");
+        plan.RequiresApproval.Should().BeTrue();
     }
 
     [Fact]
@@ -181,8 +181,8 @@ public sealed class CapabilityGovernanceTests
         var playwrightPlan = await resolver.ResolveAsync("crawler.playwright");
         var pythonPlan = await resolver.ResolveAsync("jobs.summary");
 
-        Assert.Equal("playwright-wrapper", playwrightPlan.Command);
-        Assert.Equal("python3", pythonPlan.Command);
+        playwrightPlan.Command.Should().Be("playwright-wrapper");
+        pythonPlan.Command.Should().Be("python3");
     }
 
     [Fact]
@@ -231,7 +231,7 @@ public sealed class CapabilityGovernanceTests
             Assert.Single(capabilities);
             Assert.Single(installs);
             Assert.Single(executions);
-            Assert.Equal(CapabilityHealthStatus.Healthy, capabilities[0].Health.Status);
+            capabilities[0].Health.Status.Should().Be(CapabilityHealthStatus.Healthy);
         }
         finally
         {
@@ -293,3 +293,4 @@ public sealed class CapabilityGovernanceTests
         public void Advance(TimeSpan timeSpan) => _utcNow = _utcNow.Add(timeSpan);
     }
 }
+

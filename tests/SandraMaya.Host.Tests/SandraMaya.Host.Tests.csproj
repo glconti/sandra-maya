@@ -6,6 +6,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\SandraMaya.Host\SandraMaya.Host.csproj" />
+    <PackageReference Include="AwesomeAssertions" />
   </ItemGroup>
 
 </Project>

@@ -1,4 +1,4 @@
-using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.Extensions.DependencyInjection;
 using SandraMaya.Application.Abstractions;
 using SandraMaya.Application.Contracts;
 using SandraMaya.Application.Domain;
@@ -90,10 +90,10 @@ Updated teacher profile
         var revisions = await queries.GetCvRevisionsAsync(user.Id);
         var canonical = await queries.GetCanonicalCvRevisionAsync(user.Id);
 
-        Assert.Equal(2, revisions.Count);
-        Assert.NotNull(canonical);
-        Assert.Equal(2, canonical!.RevisionNumber);
-        Assert.Equal(secondDocument.Id, canonical.MarkdownDocumentId);
+        revisions.Count.Should().Be(2);
+        canonical.Should().NotBeNull();
+        canonical!.RevisionNumber.Should().Be(2);
+        canonical.MarkdownDocumentId.Should().Be(secondDocument.Id);
         Assert.Single(revisions, static revision => revision.IsCanonical);
     }
 
@@ -138,8 +138,8 @@ Senior .NET engineer role
         var results = await queries.SearchDocumentsAsync(user.Id, "kindergarten Zurich");
 
         Assert.Single(results);
-        Assert.Equal("Teaching CV", results[0].Title);
-        Assert.Equal(DocumentKind.Cv, results[0].Kind);
+        results[0].Title.Should().Be("Teaching CV");
+        results[0].Kind.Should().Be(DocumentKind.Cv);
     }
 
     [Fact]
@@ -183,8 +183,8 @@ Senior .NET engineer role
         var results = await queries.SearchJobPostingsAsync(user.Id, new JobPostingQuery(SearchText: "Teacher"));
 
         Assert.Single(results);
-        Assert.Equal(first.Id, second.Id);
-        Assert.Equal("https://example.com/jobs/123?updated=true", results[0].SourceUrl);
+        second.Id.Should().Be(first.Id);
+        results[0].SourceUrl.Should().Be("https://example.com/jobs/123?updated=true");
     }
 
     [Fact]
@@ -232,9 +232,10 @@ Senior .NET engineer role
         var statuses = await queries.GetJobApplicationStatusesAsync(user.Id);
 
         Assert.Single(statuses);
-        Assert.Equal(initial.Id, updated.Id);
-        Assert.Equal(JobApplicationStatus.Applied, statuses[0].Status);
-        Assert.NotNull(statuses[0].AppliedAtUtc);
-        Assert.Equal("Submitted application.", statuses[0].NotesMarkdown);
+        updated.Id.Should().Be(initial.Id);
+        statuses[0].Status.Should().Be(JobApplicationStatus.Applied);
+        statuses[0].AppliedAtUtc.Should().NotBeNull();
+        statuses[0].NotesMarkdown.Should().Be("Submitted application.");
     }
 }
+

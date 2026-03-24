@@ -1,4 +1,4 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using SandraMaya.Application.Abstractions;
 using SandraMaya.Application.Contracts;
@@ -17,16 +17,16 @@ public sealed class JobCrawlingFoundationTests
 
         var sites = registry.GetAll();
 
-        Assert.Equal(4, sites.Count);
+        sites.Count.Should().Be(4);
         Assert.Contains(sites, static site => site.SiteKey == "jobs-ch");
         Assert.Contains(sites, static site => site.SiteKey == "jobagent-ch");
         Assert.Contains(sites, static site => site.SiteKey == "schuljobs-ch");
         Assert.Contains(sites, static site => site.SiteKey == "krippenstellen-ch");
-        Assert.Equal("jobs-ch", registry.Find("JOBS-CH")!.SiteKey);
-        Assert.Equal("https://www.schuljobs.ch/suche", registry.Find("schuljobs-ch")!.SearchUrl);
-        Assert.Equal("https://krippenstellen.ch/de/inserate", registry.Find("krippenstellen-ch")!.SearchUrl);
-        Assert.Equal(JobCrawlStrategyKind.PlaywrightBrowser, registry.Find("jobagent-ch")!.DefaultStrategy);
-        Assert.Equal(JobCrawlStrategyKind.PlaywrightBrowser, registry.Find("krippenstellen-ch")!.DefaultStrategy);
+        registry.Find("JOBS-CH".Should().Be("jobs-ch")!.SiteKey);
+        registry.Find("schuljobs-ch".Should().Be("https://www.schuljobs.ch/suche")!.SearchUrl);
+        registry.Find("krippenstellen-ch".Should().Be("https://krippenstellen.ch/de/inserate")!.SearchUrl);
+        registry.Find("jobagent-ch".Should().Be(JobCrawlStrategyKind.PlaywrightBrowser)!.DefaultStrategy);
+        registry.Find("krippenstellen-ch".Should().Be(JobCrawlStrategyKind.PlaywrightBrowser)!.DefaultStrategy);
     }
 
     [Fact]
@@ -55,7 +55,7 @@ public sealed class JobCrawlingFoundationTests
             }
         });
 
-        Assert.Equal(JobCrawlStrategyKind.PlaywrightBrowser, strategy);
+        strategy.Should().Be(JobCrawlStrategyKind.PlaywrightBrowser);
     }
 
     [Fact]
@@ -128,12 +128,12 @@ public sealed class JobCrawlingFoundationTests
             .ToListAsync();
 
         Assert.Single(firstResult.Items);
-        Assert.Equal(JobCrawlItemStatus.Created, firstResult.Items[0].Status);
+        firstResult.Items[0].Status.Should().Be(JobCrawlItemStatus.Created);
         Assert.Single(secondResult.Items);
-        Assert.Equal(JobCrawlItemStatus.Updated, secondResult.Items[0].Status);
-        Assert.Equal(1, secondResult.UpdatedCount);
+        secondResult.Items[0].Status.Should().Be(JobCrawlItemStatus.Updated);
+        secondResult.UpdatedCount.Should().Be(1);
         Assert.Single(postings);
-        Assert.Equal("https://example.com/jobs/123?refresh=1", postings[0].SourceUrl);
+        postings[0].SourceUrl.Should().Be("https://example.com/jobs/123?refresh=1");
         Assert.Single(documents);
         Assert.Contains("Updated description", documents[0].MarkdownContent, StringComparison.Ordinal);
     }
@@ -181,8 +181,9 @@ public sealed class JobCrawlingFoundationTests
             user.Id,
             new JobPostingQuery(SearchText: "Primary Teacher", ActiveOnly: false));
 
-        Assert.Equal(JobCrawlRunStatus.Succeeded, result.Status);
+        result.Status.Should().Be(JobCrawlRunStatus.Succeeded);
         Assert.Single(postings);
-        Assert.Equal("Unknown employer", postings[0].CompanyName);
+        postings[0].CompanyName.Should().Be("Unknown employer");
     }
 }
+

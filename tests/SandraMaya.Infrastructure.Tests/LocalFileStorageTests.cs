@@ -1,4 +1,4 @@
-using System.Security.Cryptography;
+﻿using System.Security.Cryptography;
 using System.Text;
 using Microsoft.Extensions.DependencyInjection;
 using SandraMaya.Application.Abstractions;
@@ -20,11 +20,12 @@ public sealed class LocalFileStorageTests
         var descriptor = await storage.SaveAsync(
             new FileStorageWriteRequest("hello.txt", "text/plain", StoragePartition.Uploads, content));
 
-        Assert.True(File.Exists(descriptor.AbsolutePath));
-        Assert.Equal("text/plain", descriptor.ContentType);
+        File.Exists(descriptor.AbsolutePath.Should().BeTrue());
+        descriptor.ContentType.Should().Be("text/plain");
         Assert.Equal(new FileInfo(descriptor.AbsolutePath).Length, descriptor.ByteCount);
 
         var expectedHash = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes("hello from sandra maya"))).ToLowerInvariant();
-        Assert.Equal(expectedHash, descriptor.Sha256);
+        descriptor.Sha256.Should().Be(expectedHash);
     }
 }
+
