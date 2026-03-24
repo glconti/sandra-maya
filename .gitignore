@@ -33,3 +33,10 @@ node_modules/
 **/*.dll
 **/*.pdb
 **/*.exe
+App_Data/*.db
+**/App_Data/*.db
+*.cache
+artifacts/
+*.nupkg
+packages/
+TestResults/
