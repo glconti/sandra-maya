@@ -14,7 +14,7 @@ public sealed class JobSiteRegistry : IJobSiteRegistry
             BaseUrl = "https://www.jobs.ch/",
             SearchUrl = "https://www.jobs.ch/en/vacancies/",
             AuthenticationMode = JobSiteAuthenticationMode.OptionalLogin,
-            DefaultStrategy = JobCrawlStrategyKind.ScriptedHttp,
+            DefaultStrategy = JobCrawlStrategyKind.PlaywrightBrowser,
             SupportedStrategies =
             [
                 JobCrawlStrategyKind.ScriptedHttp,

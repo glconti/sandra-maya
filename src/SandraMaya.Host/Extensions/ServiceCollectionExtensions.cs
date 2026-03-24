@@ -133,6 +133,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IToolHandler, CapabilityListTool>();
         services.AddScoped<IToolHandler, CapabilityProposeTool>();
         services.AddScoped<IToolHandler, CapabilityExecuteTool>();
+        services.AddScoped<IToolHandler, CapabilitySetStatusTool>();
 
         // MCP management tools
         services.AddSingleton<IToolHandler, McpListServersTool>();

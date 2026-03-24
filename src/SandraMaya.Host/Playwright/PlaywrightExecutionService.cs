@@ -104,11 +104,17 @@ public sealed class PlaywrightExecutionService : IPlaywrightExecutionService
                     WorkingDirectory = workingDir
                 };
 
-                // Ensure Playwright browsers path is set
+                // Propagate PLAYWRIGHT_BROWSERS_PATH only when the host process already has it set.
+                // Do NOT default to "0" — that forces Playwright to look inside node_modules
+                // (.local-browsers) instead of the OS-default install location
+                // (%LOCALAPPDATA%\ms-playwright on Windows) where `npx playwright install` puts them.
                 if (!psi.Environment.ContainsKey("PLAYWRIGHT_BROWSERS_PATH"))
                 {
-                    psi.Environment["PLAYWRIGHT_BROWSERS_PATH"] =
-                        Environment.GetEnvironmentVariable("PLAYWRIGHT_BROWSERS_PATH") ?? "0";
+                    var hostBrowsersPath = Environment.GetEnvironmentVariable("PLAYWRIGHT_BROWSERS_PATH");
+                    if (!string.IsNullOrWhiteSpace(hostBrowsersPath))
+                    {
+                        psi.Environment["PLAYWRIGHT_BROWSERS_PATH"] = hostBrowsersPath;
+                    }
                 }
 
                 // Help Node resolve packages by setting NODE_PATH when node_modules exists next to workingDir
