@@ -61,6 +61,35 @@ public sealed class PlaywrightExecutionService : IPlaywrightExecutionService
                 scriptFileName,
                 request.Timeout.TotalSeconds);
 
+            // Determine a working directory where Node can resolve 'playwright' (look for node_modules/playwright)
+            string ResolveWorkingDir()
+            {
+                var candidates = new[] {
+                    AppContext.BaseDirectory,
+                    Environment.CurrentDirectory,
+                    _storage.WorkPath,
+                    _storage.Root,
+                    Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..")),
+                    Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", ".."))
+                };
+
+                foreach (var c in candidates)
+                {
+                    if (string.IsNullOrWhiteSpace(c)) continue;
+                    try
+                    {
+                        var nm = Path.Combine(c, "node_modules", "playwright");
+                        if (Directory.Exists(nm)) return c;
+                    }
+                    catch { /* ignore IO errors */ }
+                }
+
+                // Fallback to the script folder so Node will at least resolve relative imports there
+                return Path.GetDirectoryName(scriptPath) ?? AppContext.BaseDirectory;
+            }
+
+            var workingDir = ResolveWorkingDir();
+
             var psi = new ProcessStartInfo
             {
                 FileName = _runtime.PlaywrightCommand,
@@ -69,14 +98,26 @@ public sealed class PlaywrightExecutionService : IPlaywrightExecutionService
                 RedirectStandardError = true,
                 UseShellExecute = false,
                 CreateNoWindow = true,
-                WorkingDirectory = AppContext.BaseDirectory
+                WorkingDirectory = workingDir
             };
 
+            // Ensure Playwright browsers path is set
             if (!psi.Environment.ContainsKey("PLAYWRIGHT_BROWSERS_PATH"))
             {
                 psi.Environment["PLAYWRIGHT_BROWSERS_PATH"] =
                     Environment.GetEnvironmentVariable("PLAYWRIGHT_BROWSERS_PATH") ?? "0";
             }
+
+            // Help Node resolve packages by setting NODE_PATH when node_modules exists next to workingDir
+            try
+            {
+                var nodeModules = Path.Combine(workingDir, "node_modules");
+                if (Directory.Exists(nodeModules) && !psi.Environment.ContainsKey("NODE_PATH"))
+                {
+                    psi.Environment["NODE_PATH"] = nodeModules;
+                }
+            }
+            catch { /* ignore */ }
 
             if (request.EnvironmentVariables is not null)
             {
