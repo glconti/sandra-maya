@@ -70,3 +70,10 @@ D:\Repos\sandra-maya\src\SandraMaya.Host\obj\Debug\net8.0\refint\SandraMaya.Host
 D:\Repos\sandra-maya\src\SandraMaya.Host\obj\Debug\net8.0\SandraMaya.Host.pdb
 D:\Repos\sandra-maya\src\SandraMaya.Host\obj\Debug\net8.0\SandraMaya.Host.genruntimeconfig.cache
 D:\Repos\sandra-maya\src\SandraMaya.Host\obj\Debug\net8.0\ref\SandraMaya.Host.dll
+D:\Repos\sandra-maya\src\SandraMaya.Host\obj\Debug\net8.0\SandraMaya.Host.sourcelink.json
+D:\Repos\sandra-maya\src\SandraMaya.Host\bin\Debug\net8.0\Azure.AI.OpenAI.dll
+D:\Repos\sandra-maya\src\SandraMaya.Host\bin\Debug\net8.0\Azure.Core.dll
+D:\Repos\sandra-maya\src\SandraMaya.Host\bin\Debug\net8.0\Microsoft.Bcl.AsyncInterfaces.dll
+D:\Repos\sandra-maya\src\SandraMaya.Host\bin\Debug\net8.0\OpenAI.dll
+D:\Repos\sandra-maya\src\SandraMaya.Host\bin\Debug\net8.0\System.ClientModel.dll
+D:\Repos\sandra-maya\src\SandraMaya.Host\bin\Debug\net8.0\System.Memory.Data.dll

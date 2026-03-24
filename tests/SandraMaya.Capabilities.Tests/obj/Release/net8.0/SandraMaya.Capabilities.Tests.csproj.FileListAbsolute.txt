@@ -100,3 +100,4 @@ D:\Repos\sandra-maya\tests\SandraMaya.Capabilities.Tests\obj\Release\net8.0\refi
 D:\Repos\sandra-maya\tests\SandraMaya.Capabilities.Tests\obj\Release\net8.0\SandraMaya.Capabilities.Tests.pdb
 D:\Repos\sandra-maya\tests\SandraMaya.Capabilities.Tests\obj\Release\net8.0\SandraMaya.Capabilities.Tests.genruntimeconfig.cache
 D:\Repos\sandra-maya\tests\SandraMaya.Capabilities.Tests\obj\Release\net8.0\ref\SandraMaya.Capabilities.Tests.dll
+D:\Repos\sandra-maya\tests\SandraMaya.Capabilities.Tests\obj\Release\net8.0\SandraMaya.Capabilities.Tests.sourcelink.json

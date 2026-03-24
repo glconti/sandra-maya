@@ -10,10 +10,11 @@
 using System;
 using System.Reflection;
 
+[assembly: Microsoft.Extensions.Configuration.UserSecrets.UserSecretsIdAttribute("sandra-maya-host")]
 [assembly: System.Reflection.AssemblyCompanyAttribute("SandraMaya.Host")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Release")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+3700a5b2e3021acf232c454e8f0209ca9adf5814")]
 [assembly: System.Reflection.AssemblyProductAttribute("SandraMaya.Host")]
 [assembly: System.Reflection.AssemblyTitleAttribute("SandraMaya.Host")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

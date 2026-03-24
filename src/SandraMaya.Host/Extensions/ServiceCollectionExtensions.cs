@@ -16,6 +16,8 @@ public static class ServiceCollectionExtensions
 {
     public static IServiceCollection AddSandraMayaHost(this IServiceCollection services, IConfiguration configuration)
     {
+        var telegramOptions = configuration.GetSection(TelegramOptions.SectionName).Get<TelegramOptions>() ?? new TelegramOptions();
+
         services.AddMemoryFoundation(configuration);
 
         services
@@ -87,20 +89,24 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<ICapabilityExecutionPlanResolver, CapabilityExecutionPlanResolver>();
 
         services.AddSingleton<IAssistantSessionStore, InMemoryAssistantSessionStore>();
-        services.AddSingleton<IAssistantOrchestrator, PlaceholderAssistantOrchestrator>();
-        services.AddSingleton<IInboundMessageRouter, AssistantMessageRouter>();
-        services.AddSingleton<IOutboundMessageDispatcher, TelegramOutboundMessageDispatcher>();
-
-        services.AddHttpClient<ITelegramBotApiClient, TelegramBotApiClient>(client =>
-        {
-            client.BaseAddress = new Uri("https://api.telegram.org/");
-        });
-
-        services.AddSingleton<ITelegramUpdateRouter, TelegramUpdateRouter>();
-        services.AddSingleton<ITelegramUpdateHandler, TelegramMessageUpdateHandler>();
-        services.AddSingleton<ITelegramMessageMapper, TelegramMessageMapper>();
+        services.AddSingleton<IAssistantOrchestrator, AzureOpenAiAssistantOrchestrator>();
         services.AddHostedService<StorageBootstrapService>();
-        services.AddHostedService<TelegramPollingService>();
+
+        if (!string.IsNullOrWhiteSpace(telegramOptions.BotToken))
+        {
+            services.AddSingleton<IInboundMessageRouter, AssistantMessageRouter>();
+            services.AddSingleton<IOutboundMessageDispatcher, TelegramOutboundMessageDispatcher>();
+
+            services.AddHttpClient<ITelegramBotApiClient, TelegramBotApiClient>(client =>
+            {
+                client.BaseAddress = new Uri("https://api.telegram.org/");
+            });
+
+            services.AddSingleton<ITelegramUpdateRouter, TelegramUpdateRouter>();
+            services.AddSingleton<ITelegramUpdateHandler, TelegramMessageUpdateHandler>();
+            services.AddSingleton<ITelegramMessageMapper, TelegramMessageMapper>();
+            services.AddHostedService<TelegramPollingService>();
+        }
 
         services
             .AddHealthChecks()

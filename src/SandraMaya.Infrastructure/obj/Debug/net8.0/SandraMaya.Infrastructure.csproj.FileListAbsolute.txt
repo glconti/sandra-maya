@@ -13,3 +13,4 @@ D:\Repos\sandra-maya\src\SandraMaya.Infrastructure\obj\Debug\net8.0\SandraMaya.I
 D:\Repos\sandra-maya\src\SandraMaya.Infrastructure\obj\Debug\net8.0\refint\SandraMaya.Infrastructure.dll
 D:\Repos\sandra-maya\src\SandraMaya.Infrastructure\obj\Debug\net8.0\SandraMaya.Infrastructure.pdb
 D:\Repos\sandra-maya\src\SandraMaya.Infrastructure\obj\Debug\net8.0\ref\SandraMaya.Infrastructure.dll
+D:\Repos\sandra-maya\src\SandraMaya.Infrastructure\obj\Debug\net8.0\SandraMaya.Infrastructure.sourcelink.json

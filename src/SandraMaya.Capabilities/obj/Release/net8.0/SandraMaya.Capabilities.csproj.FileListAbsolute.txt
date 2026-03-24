@@ -9,3 +9,4 @@ D:\Repos\sandra-maya\src\SandraMaya.Capabilities\obj\Release\net8.0\SandraMaya.C
 D:\Repos\sandra-maya\src\SandraMaya.Capabilities\obj\Release\net8.0\refint\SandraMaya.Capabilities.dll
 D:\Repos\sandra-maya\src\SandraMaya.Capabilities\obj\Release\net8.0\SandraMaya.Capabilities.pdb
 D:\Repos\sandra-maya\src\SandraMaya.Capabilities\obj\Release\net8.0\ref\SandraMaya.Capabilities.dll
+D:\Repos\sandra-maya\src\SandraMaya.Capabilities\obj\Release\net8.0\SandraMaya.Capabilities.sourcelink.json

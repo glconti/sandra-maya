@@ -149,3 +149,9 @@ D:\Repos\sandra-maya\tests\SandraMaya.Host.Tests\obj\Release\net8.0\refint\Sandr
 D:\Repos\sandra-maya\tests\SandraMaya.Host.Tests\obj\Release\net8.0\SandraMaya.Host.Tests.pdb
 D:\Repos\sandra-maya\tests\SandraMaya.Host.Tests\obj\Release\net8.0\SandraMaya.Host.Tests.genruntimeconfig.cache
 D:\Repos\sandra-maya\tests\SandraMaya.Host.Tests\obj\Release\net8.0\ref\SandraMaya.Host.Tests.dll
+D:\Repos\sandra-maya\tests\SandraMaya.Host.Tests\bin\Release\net8.0\Azure.AI.OpenAI.dll
+D:\Repos\sandra-maya\tests\SandraMaya.Host.Tests\bin\Release\net8.0\Azure.Core.dll
+D:\Repos\sandra-maya\tests\SandraMaya.Host.Tests\bin\Release\net8.0\Microsoft.Bcl.AsyncInterfaces.dll
+D:\Repos\sandra-maya\tests\SandraMaya.Host.Tests\bin\Release\net8.0\OpenAI.dll
+D:\Repos\sandra-maya\tests\SandraMaya.Host.Tests\bin\Release\net8.0\System.ClientModel.dll
+D:\Repos\sandra-maya\tests\SandraMaya.Host.Tests\bin\Release\net8.0\System.Memory.Data.dll

@@ -40,7 +40,7 @@ public sealed class ConfigurationHealthCheck : IHealthCheck
 
         if (string.IsNullOrWhiteSpace(_telegramOptions.Value.BotToken))
         {
-            return Task.FromResult(HealthCheckResult.Unhealthy("Telegram bot token is missing.", data: data));
+            return Task.FromResult(HealthCheckResult.Degraded("Telegram bot token is missing; polling is disabled.", data: data));
         }
 
         var missingPaths = new[]

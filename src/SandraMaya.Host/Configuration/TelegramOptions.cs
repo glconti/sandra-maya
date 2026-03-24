@@ -6,7 +6,6 @@ public sealed class TelegramOptions
 {
     public const string SectionName = "Telegram";
 
-    [Required]
     public string BotToken { get; init; } = string.Empty;
 
     [Range(1, 50)]
