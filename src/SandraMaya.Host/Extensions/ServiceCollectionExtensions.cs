@@ -26,8 +26,6 @@ public static class ServiceCollectionExtensions
     {
         var telegramOptions = configuration.GetSection(TelegramOptions.SectionName).Get<TelegramOptions>() ?? new TelegramOptions();
 
-        services.AddMemoryFoundation(configuration);
-
         services
             .AddOptions<TelegramOptions>()
             .Bind(configuration.GetSection(TelegramOptions.SectionName))

@@ -2,6 +2,7 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
+using Microsoft.Extensions.DependencyInjection;
 using SandraMaya.Capabilities.Abstractions;
 using SandraMaya.Capabilities.Models;
 using SandraMaya.Host.Storage;
@@ -11,7 +12,7 @@ namespace SandraMaya.Host.Assistant.ToolCalling.Tools;
 public sealed partial class CapabilityProposeTool(
     ICapabilityRegistryService registry,
     ICapabilityActivityService activityService,
-    ToolRegistry toolRegistry,
+    IServiceProvider serviceProvider,
     StorageLayout storageLayout,
     ILogger<CapabilityProposeTool> logger) : IToolHandler
 {
@@ -145,6 +146,7 @@ public sealed partial class CapabilityProposeTool(
 
             if (autoApprove)
             {
+                var toolRegistry = serviceProvider.GetRequiredService<ToolRegistry>();
                 toolRegistry.Register(new GeneratedCapabilityToolHandler(capabilityId, name, description, parametersSchema));
                 logger.LogInformation(
                     "Capability {CapabilityId} auto-approved (local-readonly) and registered as dynamic tool.",

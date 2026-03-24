@@ -1,6 +1,35 @@
-bin/
-obj/
-TestResults/
-.vs/
-*.user
-*.suo
+# Build outputs
+**/bin/
+**/obj/
+
+# Visual Studio / IDE
+.vs/
+.idea/
+*.user
+*.suo
+
+# Test and coverage outputs
+coverage/
+*.coverage
+
+# App data and sqlite databases
+**/App_Data/**/*.db
+**/App_Data/**/*.db-shm
+**/App_Data/**/*.db-wal
+src/SandraMaya.Host/App_Data/sqlite/
+
+# Copilot temporary test outputs
+.copilot-test-output/
+.copilot-test-obj/
+
+# Logs and temp files
+*.log
+*.tmp
+
+# Node
+node_modules/
+
+# Ignore generated files from build
+**/*.dll
+**/*.pdb
+**/*.exe
