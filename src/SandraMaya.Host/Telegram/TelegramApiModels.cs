@@ -173,6 +173,27 @@ public sealed class TelegramVoice
     public long? FileSize { get; init; }
 }
 
+public sealed class TelegramFile
+{
+    [JsonPropertyName("file_id")]
+    public string? FileId { get; init; }
+
+    [JsonPropertyName("file_unique_id")]
+    public string? FileUniqueId { get; init; }
+
+    [JsonPropertyName("file_size")]
+    public long? FileSize { get; init; }
+
+    [JsonPropertyName("file_path")]
+    public string? FilePath { get; init; }
+}
+
+internal sealed class TelegramGetFileRequest
+{
+    [JsonPropertyName("file_id")]
+    public string FileId { get; init; } = string.Empty;
+}
+
 internal sealed class TelegramGetUpdatesRequest
 {
     [JsonPropertyName("offset")]

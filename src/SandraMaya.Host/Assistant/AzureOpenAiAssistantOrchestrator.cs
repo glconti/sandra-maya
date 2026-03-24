@@ -1,10 +1,13 @@
 using System.ClientModel;
 using System.Collections.Concurrent;
+using System.Text;
 using Azure;
 using Azure.AI.OpenAI;
 using Microsoft.Extensions.Options;
 using OpenAI.Chat;
 using SandraMaya.Host.Configuration;
+using UglyToad.PdfPig;
+using UglyToad.PdfPig.Content;
 
 namespace SandraMaya.Host.Assistant;
 
@@ -85,19 +88,76 @@ public sealed class AzureOpenAiAssistantOrchestrator : IAssistantOrchestrator
 
     private static string ResolveUserText(InboundMessage message)
     {
-        if (!string.IsNullOrWhiteSpace(message.EffectiveText))
-            return message.EffectiveText;
+        var parts = new List<string>();
 
-        if (message.Attachments.Count > 0)
+        if (!string.IsNullOrWhiteSpace(message.EffectiveText))
         {
-            var attachment = message.Attachments[0];
+            parts.Add(message.EffectiveText);
+        }
+
+        foreach (var attachment in message.Attachments)
+        {
+            var extracted = ExtractText(attachment);
             var descriptor = string.IsNullOrWhiteSpace(attachment.FileName)
                 ? attachment.Kind.ToString()
                 : attachment.FileName;
-            return $"I've sent you a file: {descriptor}. Please acknowledge receipt.";
+
+            if (!string.IsNullOrWhiteSpace(extracted))
+            {
+                parts.Add($"[Attached file: {descriptor}]\n{extracted}");
+            }
+            else
+            {
+                parts.Add($"[Attached file: {descriptor} ({attachment.ContentType ?? "unknown type"})]");
+            }
         }
 
-        return "I received your message but couldn't read the text.";
+        return parts.Count > 0
+            ? string.Join("\n\n", parts)
+            : "I received your message but couldn't read the text.";
+    }
+
+    private static string? ExtractText(InboundAttachment attachment)
+    {
+        if (attachment.Content is not { Length: > 0 } bytes)
+        {
+            return null;
+        }
+
+        var mime = attachment.ContentType ?? string.Empty;
+
+        if (mime.StartsWith("text/", StringComparison.OrdinalIgnoreCase))
+        {
+            return Encoding.UTF8.GetString(bytes);
+        }
+
+        if (mime.Equals("application/pdf", StringComparison.OrdinalIgnoreCase) ||
+            (attachment.FileName?.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase) ?? false))
+        {
+            return ExtractPdfText(bytes);
+        }
+
+        return null;
+    }
+
+    private static string? ExtractPdfText(byte[] bytes)
+    {
+        try
+        {
+            using var pdf = PdfDocument.Open(bytes);
+            var sb = new StringBuilder();
+
+            foreach (Page page in pdf.GetPages())
+            {
+                sb.AppendLine(page.Text);
+            }
+
+            return sb.ToString().Trim();
+        }
+        catch
+        {
+            return null;
+        }
     }
 
     private static AssistantTurnResult SingleReply(string sessionId, string text) =>

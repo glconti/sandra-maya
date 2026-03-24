@@ -83,6 +83,25 @@ public sealed class TelegramBotApiClient : ITelegramBotApiClient
         _ = await ReadResponseAsync<TelegramMessage>(response, cancellationToken);
     }
 
+    public async Task<TelegramFile?> GetFileAsync(string fileId, CancellationToken cancellationToken)
+    {
+        var request = new TelegramGetFileRequest { FileId = fileId };
+
+        using var response = await _httpClient.PostAsJsonAsync(
+            BotUrl("getFile"),
+            request,
+            _jsonOptions,
+            cancellationToken);
+
+        return await ReadResponseAsync<TelegramFile>(response, cancellationToken);
+    }
+
+    public async Task<byte[]> DownloadFileAsync(string filePath, CancellationToken cancellationToken)
+    {
+        var downloadUrl = $"{_httpClient.BaseAddress!.AbsoluteUri}file/bot{_options.Value.BotToken}/{filePath}";
+        return await _httpClient.GetByteArrayAsync(downloadUrl, cancellationToken);
+    }
+
     private async Task<T?> ReadResponseAsync<T>(HttpResponseMessage response, CancellationToken cancellationToken)
     {
         var body = await response.Content.ReadAsStringAsync(cancellationToken);

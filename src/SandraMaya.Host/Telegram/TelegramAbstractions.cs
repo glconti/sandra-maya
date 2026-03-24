@@ -14,6 +14,10 @@ public interface ITelegramBotApiClient
         CancellationToken cancellationToken);
 
     Task SendMessageAsync(long chatId, string text, CancellationToken cancellationToken);
+
+    Task<TelegramFile?> GetFileAsync(string fileId, CancellationToken cancellationToken);
+
+    Task<byte[]> DownloadFileAsync(string filePath, CancellationToken cancellationToken);
 }
 
 public interface ITelegramUpdateRouter
@@ -30,5 +34,5 @@ public interface ITelegramUpdateHandler
 
 public interface ITelegramMessageMapper
 {
-    InboundMessage? Map(TelegramUpdate update);
+    Task<InboundMessage?> MapAsync(TelegramUpdate update, CancellationToken cancellationToken);
 }

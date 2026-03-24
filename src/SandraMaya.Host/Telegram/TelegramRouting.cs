@@ -51,7 +51,7 @@ public sealed class TelegramMessageUpdateHandler : ITelegramUpdateHandler
 
     public async Task HandleAsync(TelegramUpdate update, CancellationToken cancellationToken)
     {
-        var inboundMessage = _messageMapper.Map(update);
+        var inboundMessage = await _messageMapper.MapAsync(update, cancellationToken);
 
         if (inboundMessage is null)
         {
@@ -65,7 +65,18 @@ public sealed class TelegramMessageUpdateHandler : ITelegramUpdateHandler
 
 public sealed class TelegramMessageMapper : ITelegramMessageMapper
 {
-    public InboundMessage? Map(TelegramUpdate update)
+    private readonly ITelegramBotApiClient _apiClient;
+    private readonly ILogger<TelegramMessageMapper> _logger;
+
+    public TelegramMessageMapper(
+        ITelegramBotApiClient apiClient,
+        ILogger<TelegramMessageMapper> logger)
+    {
+        _apiClient = apiClient;
+        _logger = logger;
+    }
+
+    public async Task<InboundMessage?> MapAsync(TelegramUpdate update, CancellationToken cancellationToken)
     {
         var message = update.Message ?? update.EditedMessage;
 
@@ -89,71 +100,122 @@ public sealed class TelegramMessageMapper : ITelegramMessageMapper
             ? DateTimeOffset.FromUnixTimeSeconds(message.Date)
             : DateTimeOffset.UtcNow;
 
+        var attachments = await BuildAttachmentsAsync(message, cancellationToken);
+
         return new InboundMessage(
             message.MessageId.ToString(CultureInfo.InvariantCulture),
             conversation,
             sender,
             message.Text,
             message.Caption,
-            BuildAttachments(message),
+            attachments,
             receivedAtUtc);
     }
 
-    private static IReadOnlyList<InboundAttachment> BuildAttachments(TelegramMessage message)
+    private async Task<IReadOnlyList<InboundAttachment>> BuildAttachmentsAsync(
+        TelegramMessage message,
+        CancellationToken cancellationToken)
     {
         var attachments = new List<InboundAttachment>();
 
         if (message.Document is not null)
         {
-            attachments.Add(new InboundAttachment(
-                InboundAttachmentKind.Document,
-                message.Document.FileUniqueId ?? message.Document.FileId ?? Guid.NewGuid().ToString("N"),
-                message.Document.FileName,
-                message.Document.MimeType,
-                message.Document.FileSize));
+            attachments.Add(await DownloadAttachmentAsync(
+                new InboundAttachment(
+                    InboundAttachmentKind.Document,
+                    message.Document.FileUniqueId ?? message.Document.FileId ?? Guid.NewGuid().ToString("N"),
+                    message.Document.FileName,
+                    message.Document.MimeType,
+                    message.Document.FileSize),
+                message.Document.FileId,
+                cancellationToken));
         }
 
         if (message.Photo is not null)
         {
-            attachments.AddRange(message.Photo.Select(photo => new InboundAttachment(
-                InboundAttachmentKind.Photo,
-                photo.FileUniqueId ?? photo.FileId ?? Guid.NewGuid().ToString("N"),
-                null,
-                "image/jpeg",
-                photo.FileSize)));
+            // Take the highest-resolution photo (last in the array)
+            var photo = message.Photo[^1];
+            attachments.Add(await DownloadAttachmentAsync(
+                new InboundAttachment(
+                    InboundAttachmentKind.Photo,
+                    photo.FileUniqueId ?? photo.FileId ?? Guid.NewGuid().ToString("N"),
+                    null,
+                    "image/jpeg",
+                    photo.FileSize),
+                photo.FileId,
+                cancellationToken));
         }
 
         if (message.Audio is not null)
         {
-            attachments.Add(new InboundAttachment(
-                InboundAttachmentKind.Audio,
-                message.Audio.FileUniqueId ?? message.Audio.FileId ?? Guid.NewGuid().ToString("N"),
-                message.Audio.FileName,
-                message.Audio.MimeType,
-                message.Audio.FileSize));
+            attachments.Add(await DownloadAttachmentAsync(
+                new InboundAttachment(
+                    InboundAttachmentKind.Audio,
+                    message.Audio.FileUniqueId ?? message.Audio.FileId ?? Guid.NewGuid().ToString("N"),
+                    message.Audio.FileName,
+                    message.Audio.MimeType,
+                    message.Audio.FileSize),
+                message.Audio.FileId,
+                cancellationToken));
         }
 
         if (message.Video is not null)
         {
-            attachments.Add(new InboundAttachment(
-                InboundAttachmentKind.Video,
-                message.Video.FileUniqueId ?? message.Video.FileId ?? Guid.NewGuid().ToString("N"),
-                message.Video.FileName,
-                message.Video.MimeType,
-                message.Video.FileSize));
+            attachments.Add(await DownloadAttachmentAsync(
+                new InboundAttachment(
+                    InboundAttachmentKind.Video,
+                    message.Video.FileUniqueId ?? message.Video.FileId ?? Guid.NewGuid().ToString("N"),
+                    message.Video.FileName,
+                    message.Video.MimeType,
+                    message.Video.FileSize),
+                message.Video.FileId,
+                cancellationToken));
         }
 
         if (message.Voice is not null)
         {
-            attachments.Add(new InboundAttachment(
-                InboundAttachmentKind.Voice,
-                message.Voice.FileUniqueId ?? message.Voice.FileId ?? Guid.NewGuid().ToString("N"),
-                null,
-                message.Voice.MimeType,
-                message.Voice.FileSize));
+            attachments.Add(await DownloadAttachmentAsync(
+                new InboundAttachment(
+                    InboundAttachmentKind.Voice,
+                    message.Voice.FileUniqueId ?? message.Voice.FileId ?? Guid.NewGuid().ToString("N"),
+                    null,
+                    message.Voice.MimeType,
+                    message.Voice.FileSize),
+                message.Voice.FileId,
+                cancellationToken));
         }
 
         return attachments;
+    }
+
+    private async Task<InboundAttachment> DownloadAttachmentAsync(
+        InboundAttachment attachment,
+        string? fileId,
+        CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(fileId))
+        {
+            return attachment;
+        }
+
+        try
+        {
+            var fileInfo = await _apiClient.GetFileAsync(fileId, cancellationToken);
+
+            if (string.IsNullOrWhiteSpace(fileInfo?.FilePath))
+            {
+                _logger.LogWarning("Telegram getFile returned no file_path for file_id {FileId}.", fileId);
+                return attachment;
+            }
+
+            var content = await _apiClient.DownloadFileAsync(fileInfo.FilePath, cancellationToken);
+            return attachment with { Content = content };
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed to download Telegram file {FileId}; attachment will have no content.", fileId);
+            return attachment;
+        }
     }
 
     private static string? BuildDisplayName(TelegramUser? user, TelegramChat chat)

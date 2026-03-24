@@ -30,7 +30,11 @@ public sealed record InboundAttachment(
     string AttachmentId,
     string? FileName,
     string? ContentType,
-    long? SizeBytes);
+    long? SizeBytes)
+{
+    /// <summary>Raw bytes of the downloaded file, if download succeeded.</summary>
+    public byte[]? Content { get; init; }
+}
 
 public sealed record InboundMessage(
     string MessageId,

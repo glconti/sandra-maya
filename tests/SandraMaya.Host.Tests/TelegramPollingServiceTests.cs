@@ -87,6 +87,12 @@ public sealed class TelegramPollingServiceTests
         public Task SendMessageAsync(long chatId, string text, CancellationToken cancellationToken) =>
             Task.CompletedTask;
 
+        public Task<TelegramFile?> GetFileAsync(string fileId, CancellationToken cancellationToken) =>
+            Task.FromResult<TelegramFile?>(null);
+
+        public Task<byte[]> DownloadFileAsync(string filePath, CancellationToken cancellationToken) =>
+            Task.FromResult(Array.Empty<byte>());
+
         private static async Task<IReadOnlyList<TelegramUpdate>> WaitForCancellationAsync(CancellationToken cancellationToken)
         {
             try
