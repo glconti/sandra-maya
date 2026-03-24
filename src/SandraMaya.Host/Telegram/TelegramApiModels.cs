@@ -188,6 +188,12 @@ internal sealed class TelegramGetUpdatesRequest
     public IReadOnlyList<string> AllowedUpdates { get; init; } = [];
 }
 
+internal sealed class TelegramDeleteWebhookRequest
+{
+    [JsonPropertyName("drop_pending_updates")]
+    public bool DropPendingUpdates { get; init; }
+}
+
 internal sealed class TelegramSendMessageRequest
 {
     [JsonPropertyName("chat_id")]

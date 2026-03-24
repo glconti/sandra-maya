@@ -7,6 +7,7 @@
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/SandraMaya.Capabilities.Tests/SandraMaya.Capabilities.Tests.csproj" />
+    <Project Path="tests/SandraMaya.Host.Tests/SandraMaya.Host.Tests.csproj" />
     <Project Path="tests/SandraMaya.Infrastructure.Tests/SandraMaya.Infrastructure.Tests.csproj" />
   </Folder>
 </Solution>

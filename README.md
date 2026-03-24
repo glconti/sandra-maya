@@ -30,6 +30,10 @@ Set these environment variables before running:
 - `AzureOpenAi__DeploymentName`
 - `Storage__Root` (defaults to `App_Data` locally, use `/data` in containers)
 
+For local development, the host can start without `Telegram__BotToken`; Telegram polling will be skipped and `/health` will report degraded configuration instead of failing startup.
+
+The current transport is long polling only. On startup, the host clears any previously configured Telegram webhook so `getUpdates` can receive messages again without manual BotFather cleanup.
+
 Optional Azure settings:
 
 - `AzureOpenAi__ProviderType` (`azure` by default)

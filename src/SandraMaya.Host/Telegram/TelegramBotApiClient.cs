@@ -17,6 +17,31 @@ public sealed class TelegramBotApiClient : ITelegramBotApiClient
         _options = options;
     }
 
+    // The bot token contains a colon (e.g. "123456:ABC-..."). Passing the
+    // token-prefixed path string directly to PostAsJsonAsync, or via
+    // new Uri(baseAddress, relativeString), causes HttpClient to interpret
+    // "bot123456:" as an unknown URI scheme and throw NotSupportedException.
+    // Building the full absolute URL as a string avoids that because the
+    // "https:" scheme prefix is always present and recognised.
+    private string BotUrl(string method) =>
+        $"{_httpClient.BaseAddress!.AbsoluteUri}bot{_options.Value.BotToken}/{method}";
+
+    public async Task DeleteWebhookAsync(bool dropPendingUpdates, CancellationToken cancellationToken)
+    {
+        var request = new TelegramDeleteWebhookRequest
+        {
+            DropPendingUpdates = dropPendingUpdates
+        };
+
+        using var response = await _httpClient.PostAsJsonAsync(
+            BotUrl("deleteWebhook"),
+            request,
+            _jsonOptions,
+            cancellationToken);
+
+        _ = await ReadResponseAsync<bool>(response, cancellationToken);
+    }
+
     public async Task<IReadOnlyList<TelegramUpdate>> GetUpdatesAsync(
         long? offset,
         int limit,
@@ -33,7 +58,7 @@ public sealed class TelegramBotApiClient : ITelegramBotApiClient
         };
 
         using var response = await _httpClient.PostAsJsonAsync(
-            $"bot{_options.Value.BotToken}/getUpdates",
+            BotUrl("getUpdates"),
             request,
             _jsonOptions,
             cancellationToken);
@@ -50,7 +75,7 @@ public sealed class TelegramBotApiClient : ITelegramBotApiClient
         };
 
         using var response = await _httpClient.PostAsJsonAsync(
-            $"bot{_options.Value.BotToken}/sendMessage",
+            BotUrl("sendMessage"),
             request,
             _jsonOptions,
             cancellationToken);

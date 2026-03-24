@@ -4,6 +4,8 @@ namespace SandraMaya.Host.Telegram;
 
 public interface ITelegramBotApiClient
 {
+    Task DeleteWebhookAsync(bool dropPendingUpdates, CancellationToken cancellationToken);
+
     Task<IReadOnlyList<TelegramUpdate>> GetUpdatesAsync(
         long? offset,
         int limit,

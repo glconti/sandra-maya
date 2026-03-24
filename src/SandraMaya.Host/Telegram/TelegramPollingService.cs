@@ -10,6 +10,7 @@ public sealed class TelegramPollingService : BackgroundService
     private readonly TelegramOptions _options;
     private readonly ILogger<TelegramPollingService> _logger;
     private long? _offset;
+    private bool _webhookCleared;
 
     public TelegramPollingService(
         ITelegramBotApiClient telegramBotApiClient,
@@ -25,6 +26,12 @@ public sealed class TelegramPollingService : BackgroundService
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
+        if (string.IsNullOrWhiteSpace(_options.BotToken))
+        {
+            _logger.LogWarning("Telegram polling is disabled because Telegram:BotToken is not configured.");
+            return;
+        }
+
         var allowedUpdates = _options.IncludeEditedMessages
             ? new[] { "message", "edited_message" }
             : new[] { "message" };
@@ -35,6 +42,13 @@ public sealed class TelegramPollingService : BackgroundService
         {
             try
             {
+                if (!_webhookCleared)
+                {
+                    await _telegramBotApiClient.DeleteWebhookAsync(dropPendingUpdates: false, stoppingToken);
+                    _webhookCleared = true;
+                    _logger.LogInformation("Telegram webhook cleared. Long polling is active.");
+                }
+
                 var updates = await _telegramBotApiClient.GetUpdatesAsync(
                     _offset,
                     _options.MaxUpdatesPerRequest,
