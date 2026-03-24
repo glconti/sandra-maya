@@ -40,3 +40,4 @@ artifacts/
 *.nupkg
 packages/
 TestResults/
+App_Data/
