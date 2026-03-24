@@ -90,90 +90,173 @@ public sealed class PlaywrightExecutionService : IPlaywrightExecutionService
 
             var workingDir = ResolveWorkingDir();
 
-            var psi = new ProcessStartInfo
+            // Attempt to run the script, and if it fails due to missing browsers try a one-time automatic install and retry.
+            async Task<PlaywrightScriptResult> RunProcessAsync()
             {
-                FileName = _runtime.PlaywrightCommand,
-                Arguments = $"\"{scriptPath}\"",
-                RedirectStandardOutput = true,
-                RedirectStandardError = true,
-                UseShellExecute = false,
-                CreateNoWindow = true,
-                WorkingDirectory = workingDir
-            };
-
-            // Ensure Playwright browsers path is set
-            if (!psi.Environment.ContainsKey("PLAYWRIGHT_BROWSERS_PATH"))
-            {
-                psi.Environment["PLAYWRIGHT_BROWSERS_PATH"] =
-                    Environment.GetEnvironmentVariable("PLAYWRIGHT_BROWSERS_PATH") ?? "0";
-            }
-
-            // Help Node resolve packages by setting NODE_PATH when node_modules exists next to workingDir
-            try
-            {
-                var nodeModules = Path.Combine(workingDir, "node_modules");
-                if (Directory.Exists(nodeModules) && !psi.Environment.ContainsKey("NODE_PATH"))
+                var psi = new ProcessStartInfo
                 {
-                    psi.Environment["NODE_PATH"] = nodeModules;
-                }
-            }
-            catch { /* ignore */ }
+                    FileName = _runtime.PlaywrightCommand,
+                    Arguments = $"\"{scriptPath}\"",
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = true,
+                    UseShellExecute = false,
+                    CreateNoWindow = true,
+                    WorkingDirectory = workingDir
+                };
 
-            if (request.EnvironmentVariables is not null)
-            {
-                foreach (var (key, value) in request.EnvironmentVariables)
+                // Ensure Playwright browsers path is set
+                if (!psi.Environment.ContainsKey("PLAYWRIGHT_BROWSERS_PATH"))
                 {
-                    psi.Environment[key] = value;
+                    psi.Environment["PLAYWRIGHT_BROWSERS_PATH"] =
+                        Environment.GetEnvironmentVariable("PLAYWRIGHT_BROWSERS_PATH") ?? "0";
                 }
-            }
 
-            using var process = new Process { StartInfo = psi };
-            process.Start();
+                // Help Node resolve packages by setting NODE_PATH when node_modules exists next to workingDir
+                try
+                {
+                    var nodeModules = Path.Combine(workingDir, "node_modules");
+                    if (Directory.Exists(nodeModules) && !psi.Environment.ContainsKey("NODE_PATH"))
+                    {
+                        psi.Environment["NODE_PATH"] = nodeModules;
+                    }
+                }
+                catch { /* ignore */ }
 
-            var stdoutTask = process.StandardOutput.ReadToEndAsync(cancellationToken);
-            var stderrTask = process.StandardError.ReadToEndAsync(cancellationToken);
+                if (request.EnvironmentVariables is not null)
+                {
+                    foreach (var (key, value) in request.EnvironmentVariables)
+                    {
+                        psi.Environment[key] = value;
+                    }
+                }
 
-            using var timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-            timeoutCts.CancelAfter(request.Timeout);
+                using var process = new Process { StartInfo = psi };
+                process.Start();
 
-            try
-            {
-                await process.WaitForExitAsync(timeoutCts.Token);
-            }
-            catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
-            {
-                _logger.LogWarning(
-                    "Playwright script {ScriptFile} timed out after {Timeout}s — killing process",
+                var stdoutTask = process.StandardOutput.ReadToEndAsync(cancellationToken);
+                var stderrTask = process.StandardError.ReadToEndAsync(cancellationToken);
+
+                using var timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+                timeoutCts.CancelAfter(request.Timeout);
+
+                try
+                {
+                    await process.WaitForExitAsync(timeoutCts.Token);
+                }
+                catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
+                {
+                    _logger.LogWarning(
+                        "Playwright script {ScriptFile} timed out after {Timeout}s — killing process",
+                        scriptFileName,
+                        request.Timeout.TotalSeconds);
+
+                    try { process.Kill(entireProcessTree: true); }
+                    catch (InvalidOperationException) { /* already exited */ }
+
+                    return new PlaywrightScriptResult
+                    {
+                        Succeeded = false,
+                        Output = string.Empty,
+                        ErrorOutput = $"Script timed out after {request.Timeout.TotalSeconds} seconds.",
+                        ExitCode = -1
+                    };
+                }
+
+                var stdout = await stdoutTask;
+                var stderr = await stderrTask;
+
+                _logger.LogDebug(
+                    "Playwright script {ScriptFile} exited with code {ExitCode}",
                     scriptFileName,
-                    request.Timeout.TotalSeconds);
-
-                try { process.Kill(entireProcessTree: true); }
-                catch (InvalidOperationException) { /* already exited */ }
+                    process.ExitCode);
 
                 return new PlaywrightScriptResult
                 {
-                    Succeeded = false,
-                    Output = string.Empty,
-                    ErrorOutput = $"Script timed out after {request.Timeout.TotalSeconds} seconds.",
-                    ExitCode = -1
+                    Succeeded = process.ExitCode == 0,
+                    Output = stdout,
+                    ErrorOutput = stderr,
+                    ExitCode = process.ExitCode
                 };
             }
 
-            var stdout = await stdoutTask;
-            var stderr = await stderrTask;
+            // First attempt
+            var result = await RunProcessAsync();
 
-            _logger.LogDebug(
-                "Playwright script {ScriptFile} exited with code {ExitCode}",
-                scriptFileName,
-                process.ExitCode);
-
-            return new PlaywrightScriptResult
+            // If it failed due to missing browser executables, try installing chromium once and retry.
+            if (!result.Succeeded && !string.IsNullOrWhiteSpace(result.ErrorOutput))
             {
-                Succeeded = process.ExitCode == 0,
-                Output = stdout,
-                ErrorOutput = stderr,
-                ExitCode = process.ExitCode
-            };
+                var errLower = result.ErrorOutput.ToLowerInvariant();
+                if (errLower.Contains("executable doesn't exist") || errLower.Contains("chrome-headless-shell") || errLower.Contains("browser executable") || errLower.Contains("playwright install"))
+                {
+                    _logger.LogInformation("Detected missing Playwright browsers, attempting to install chromium via npx.");
+
+                    try
+                    {
+                        var installPsi = new ProcessStartInfo
+                        {
+                            FileName = "npx",
+                            Arguments = "playwright install chromium",
+                            RedirectStandardOutput = true,
+                            RedirectStandardError = true,
+                            UseShellExecute = false,
+                            CreateNoWindow = true,
+                            WorkingDirectory = workingDir
+                        };
+
+                        // Propagate environment hints
+                        if (!installPsi.Environment.ContainsKey("PLAYWRIGHT_BROWSERS_PATH") && psiEnvironmentHasKey("PLAYWRIGHT_BROWSERS_PATH", out var val))
+                        {
+                            installPsi.Environment["PLAYWRIGHT_BROWSERS_PATH"] = val;
+                        }
+
+                        using var installProcess = Process.Start(installPsi);
+                        if (installProcess is not null)
+                        {
+                            var outTask = installProcess.StandardOutput.ReadToEndAsync(cancellationToken);
+                            var errTask = installProcess.StandardError.ReadToEndAsync(cancellationToken);
+                            await installProcess.WaitForExitAsync(cancellationToken);
+                            var outStr = await outTask;
+                            var errStr = await errTask;
+
+                            if (installProcess.ExitCode == 0)
+                            {
+                                _logger.LogInformation("Playwright browsers installed successfully. Retrying script.");
+                                // Retry the script once
+                                result = await RunProcessAsync();
+                            }
+                            else
+                            {
+                                _logger.LogWarning("Playwright install failed: {Err}\n{Out}", errStr, outStr);
+                            }
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogWarning(ex, "Failed to run npx playwright install chromium");
+                    }
+                }
+            }
+
+            return result;
+
+            // Local helper to read existing environment key if present on the process start info
+            bool psiEnvironmentHasKey(string key, out string? value)
+            {
+                value = null;
+                try
+                {
+                    var nodeModules = Path.Combine(workingDir, "node_modules");
+                    var envPath = Environment.GetEnvironmentVariable(key);
+                    if (!string.IsNullOrEmpty(envPath))
+                    {
+                        value = envPath;
+                        return true;
+                    }
+                }
+                catch { }
+
+                return false;
+            }
         }
         finally
         {

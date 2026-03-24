@@ -1,4 +1,5 @@
 using System.Text.Json;
+using System.IO;
 using Microsoft.Extensions.Logging;
 using SandraMaya.Application.Abstractions;
 using SandraMaya.Application.Contracts;
@@ -11,15 +12,18 @@ public sealed class HostPlaywrightJobCrawlStrategy : IJobCrawlStrategy
     private readonly IPlaywrightExecutionService _playwright;
     private readonly IJobCrawlIngestionService _ingestion;
     private readonly ILogger<HostPlaywrightJobCrawlStrategy> _logger;
+    private readonly SandraMaya.Host.Storage.StorageLayout? _storage;
 
     public HostPlaywrightJobCrawlStrategy(
         IPlaywrightExecutionService playwright,
         IJobCrawlIngestionService ingestion,
-        ILogger<HostPlaywrightJobCrawlStrategy> logger)
+        ILogger<HostPlaywrightJobCrawlStrategy> logger,
+        SandraMaya.Host.Storage.StorageLayout? storage = null)
     {
         _playwright = playwright;
         _ingestion = ingestion;
         _logger = logger;
+        _storage = storage;
     }
 
     public JobCrawlStrategyKind Kind => JobCrawlStrategyKind.PlaywrightBrowser;
@@ -59,7 +63,7 @@ public sealed class HostPlaywrightJobCrawlStrategy : IJobCrawlStrategy
 
             var scriptRequest = new PlaywrightScriptRequest
             {
-                Script = BuildScript(),
+                Script = GetScriptForSite(site),
                 Timeout = TimeSpan.FromSeconds(60),
                 EnvironmentVariables = envVars
             };
@@ -172,6 +176,49 @@ public sealed class HostPlaywrightJobCrawlStrategy : IJobCrawlStrategy
         }
 
         return results;
+    }
+
+    private string GetScriptForSite(JobSiteDefinition site)
+    {
+        // Look for an override script in the storage work/scripts/playwright/<siteKey>.mjs
+        try
+        {
+            if (_storage is not null)
+            {
+                var scriptsDir = Path.Combine(_storage.WorkPath, "scripts", "playwright");
+                var siteScript = Path.Combine(scriptsDir, site.SiteKey + ".mjs");
+                if (File.Exists(siteScript))
+                {
+                    _logger.LogDebug("Using site-specific Playwright script for {SiteKey} at {Path}", site.SiteKey, siteScript);
+                    return File.ReadAllText(siteScript);
+                }
+            }
+
+            // Fallback to repository-level scripts folder (repo root/scripts/playwright)
+            try
+            {
+                var repoRoot = AppContext.BaseDirectory;
+                if (_storage is not null && !string.IsNullOrWhiteSpace(_storage.Root))
+                {
+                    repoRoot = Path.GetFullPath(Path.Combine(_storage.Root, ".."));
+                }
+
+                var repoScripts = Path.Combine(repoRoot, "scripts", "playwright");
+                var repoSiteScript = Path.Combine(repoScripts, site.SiteKey + ".mjs");
+                if (File.Exists(repoSiteScript))
+                {
+                    _logger.LogDebug("Using repository Playwright script for {SiteKey} at {Path}", site.SiteKey, repoSiteScript);
+                    return File.ReadAllText(repoSiteScript);
+                }
+            }
+            catch { /* ignore */ }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed to load site-specific script for {SiteKey}", site.SiteKey);
+        }
+
+        return BuildScript();
     }
 
     private static string BuildScript() =>
