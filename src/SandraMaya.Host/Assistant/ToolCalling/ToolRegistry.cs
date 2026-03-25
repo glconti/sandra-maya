@@ -1,10 +1,10 @@
-using OpenAI.Chat;
+using Microsoft.Extensions.AI;
 
 namespace SandraMaya.Host.Assistant.ToolCalling;
 
 /// <summary>
 /// Collects all registered <see cref="IToolHandler"/> implementations
-/// and converts them to Azure OpenAI ChatTool definitions.
+/// and converts them to Copilot SDK tool definitions.
 /// </summary>
 public sealed class ToolRegistry
 {
@@ -32,18 +32,17 @@ public sealed class ToolRegistry
     }
 
     /// <summary>
-    /// Returns all tools as Azure OpenAI ChatTool definitions
-    /// suitable for <see cref="ChatCompletionOptions.Tools"/>.
+    /// Returns all tools as Copilot SDK functions scoped to the current invocation context.
     /// </summary>
-    public IReadOnlyList<ChatTool> GetChatTools()
+    public IReadOnlyList<AIFunction> GetToolFunctions(ToolExecutionContext context)
     {
         return _handlers.Values
-            .Select(h => ChatTool.CreateFunctionTool(
-                h.Name,
-                h.Description,
-                h.ParametersSchema))
+            .Select(handler => (AIFunction)new CopilotToolFunction(handler, context))
             .ToList();
     }
+
+    public IReadOnlyList<string> GetToolNames() =>
+        _handlers.Keys.ToList();
 
     public IToolHandler? GetHandler(string toolName)
     {

@@ -9,15 +9,18 @@ public sealed class ConfigurationHealthCheck : IHealthCheck
 {
     private readonly IOptions<TelegramOptions> _telegramOptions;
     private readonly IOptions<AzureOpenAiOptions> _azureOptions;
+    private readonly IOptions<CopilotRuntimeOptions> _copilotOptions;
     private readonly StorageLayout _storageLayout;
 
     public ConfigurationHealthCheck(
         IOptions<TelegramOptions> telegramOptions,
         IOptions<AzureOpenAiOptions> azureOptions,
+        IOptions<CopilotRuntimeOptions> copilotOptions,
         StorageLayout storageLayout)
     {
         _telegramOptions = telegramOptions;
         _azureOptions = azureOptions;
+        _copilotOptions = copilotOptions;
         _storageLayout = storageLayout;
     }
 
@@ -28,9 +31,13 @@ public sealed class ConfigurationHealthCheck : IHealthCheck
         var data = new Dictionary<string, object>
         {
             ["telegramConfigured"] = !string.IsNullOrWhiteSpace(_telegramOptions.Value.BotToken),
-            ["azureConfigured"] = _azureOptions.Value.IsConfigured,
-            ["azureProviderType"] = _azureOptions.Value.ProviderType,
-            ["azureDeploymentName"] = _azureOptions.Value.DeploymentName ?? string.Empty,
+            ["copilotCliPath"] = _copilotOptions.Value.CliPath ?? string.Empty,
+            ["copilotModel"] = _copilotOptions.Value.Model ?? string.Empty,
+            ["copilotUseLoggedInUser"] = _copilotOptions.Value.UseLoggedInUser,
+            ["copilotGitHubTokenConfigured"] = !string.IsNullOrWhiteSpace(_copilotOptions.Value.GitHubToken),
+            ["copilotByokConfigured"] = _azureOptions.Value.IsConfigured,
+            ["copilotByokProviderType"] = _azureOptions.Value.ProviderType,
+            ["copilotByokDeploymentName"] = _azureOptions.Value.DeploymentName ?? string.Empty,
             ["storageRoot"] = _storageLayout.Root,
             ["sqlitePath"] = _storageLayout.SqlitePath,
             ["uploadsPath"] = _storageLayout.UploadsPath,
@@ -63,10 +70,10 @@ public sealed class ConfigurationHealthCheck : IHealthCheck
             return Task.FromResult(HealthCheckResult.Unhealthy("One or more storage paths are missing.", data: data));
         }
 
-        if (!_azureOptions.Value.IsConfigured)
+        if (!_azureOptions.Value.IsConfigured && string.IsNullOrWhiteSpace(_copilotOptions.Value.Model))
         {
             return Task.FromResult(HealthCheckResult.Degraded(
-                "Azure OpenAI settings are not fully configured.",
+                "Copilot runtime settings are not fully configured. Provide AzureOpenAi settings for BYOK or CopilotRuntime:Model for GitHub-authenticated sessions.",
                 data: data));
         }
 

@@ -1,25 +1,25 @@
-using System.ClientModel;
-using Azure;
-using Azure.AI.OpenAI;
+using GitHub.Copilot.SDK;
 using Microsoft.Extensions.Options;
-using OpenAI.Chat;
 using SandraMaya.Application.Abstractions;
 using SandraMaya.Application.Contracts;
 using SandraMaya.Application.Domain;
+using SandraMaya.Host.Assistant;
 using SandraMaya.Host.Configuration;
 
 namespace SandraMaya.Host.Services;
 
 /// <summary>
-/// Generates cover letter drafts using Azure OpenAI chat completions.
-/// Falls back to placeholder output when Azure OpenAI is not configured.
+/// Generates cover letter drafts through the GitHub Copilot SDK runtime.
+/// Falls back to placeholder output when no Copilot runtime configuration is available.
 /// </summary>
-public sealed class AzureOpenAiCoverLetterDraftService(
+public sealed class CopilotSdkCoverLetterDraftService(
     IMemoryQueryService memoryQueryService,
-    IOptions<AzureOpenAiOptions> options,
-    ILogger<AzureOpenAiCoverLetterDraftService> logger) : ICoverLetterDraftService
+    ICopilotClientProvider clientProvider,
+    CopilotRuntimeConfiguration runtimeConfiguration,
+    IOptions<CopilotRuntimeOptions> copilotOptions,
+    ILogger<CopilotSdkCoverLetterDraftService> logger) : ICoverLetterDraftService
 {
-    private readonly AzureOpenAiOptions _options = options.Value;
+    private readonly CopilotRuntimeOptions _copilotOptions = copilotOptions.Value;
 
     public async Task<CoverLetterDraftResult> GenerateDraftAsync(
         CoverLetterDraftRequest request,
@@ -45,14 +45,19 @@ public sealed class AzureOpenAiCoverLetterDraftService(
 
         var cvText = await LoadCvTextAsync(request.UserProfileId, canonicalCv, cancellationToken);
 
-        if (!_options.IsConfigured)
+        if (!runtimeConfiguration.TryResolve(out var settings, out _))
         {
-            logger.LogWarning("Azure OpenAI is not configured — returning placeholder cover letter.");
+            logger.LogWarning("Copilot runtime is not configured — returning placeholder cover letter.");
             return BuildPlaceholder(request, user, jobPosting, canonicalCv);
         }
 
-        var draftMarkdown = await GenerateWithAzureOpenAiAsync(
-            request, user, jobPosting, cvText, cancellationToken);
+        var draftMarkdown = await GenerateWithCopilotSdkAsync(
+            settings,
+            request,
+            user,
+            jobPosting,
+            cvText,
+            cancellationToken);
 
         return new CoverLetterDraftResult(
             request.UserProfileId,
@@ -66,7 +71,8 @@ public sealed class AzureOpenAiCoverLetterDraftService(
             DateTimeOffset.UtcNow);
     }
 
-    private async Task<string> GenerateWithAzureOpenAiAsync(
+    private async Task<string> GenerateWithCopilotSdkAsync(
+        CopilotSessionSettings settings,
         CoverLetterDraftRequest request,
         UserProfile user,
         JobPosting jobPosting,
@@ -74,32 +80,47 @@ public sealed class AzureOpenAiCoverLetterDraftService(
         CancellationToken cancellationToken)
     {
         var prompt = BuildPrompt(request, user, jobPosting, cvText);
+        var client = await clientProvider.GetClientAsync(cancellationToken);
 
-        var client = new AzureOpenAIClient(
-            new Uri(_options.BaseUrl!),
-            new AzureKeyCredential(_options.ApiKey!));
-
-        var chatClient = client.GetChatClient(_options.DeploymentName!);
-
-        var messages = new List<ChatMessage>
+        await using var session = await client.CreateSessionAsync(new SessionConfig
         {
-            new SystemChatMessage(
-                "You are a professional cover letter writer. " +
-                "Write concise, compelling cover letters tailored to the job posting and the applicant's experience. " +
-                "Output only the cover letter text in Markdown format, with no preamble or commentary."),
-            new UserChatMessage(prompt)
-        };
+            ClientName = settings.ClientName,
+            Model = settings.Model,
+            Provider = settings.Provider,
+            WorkingDirectory = settings.WorkingDirectory,
+            SystemMessage = new SystemMessageConfig
+            {
+                Mode = SystemMessageMode.Append,
+                Content =
+                    """
+                    You are a professional cover letter writer.
+                    Write concise, compelling cover letters tailored to the job posting and the applicant's experience.
+                    Output only the cover letter text in Markdown format, with no preamble or commentary.
+                    """
+            },
+            AvailableTools = [],
+            OnPermissionRequest = PermissionHandler.ApproveAll,
+            InfiniteSessions = new InfiniteSessionConfig
+            {
+                Enabled = false
+            }
+        }, cancellationToken);
 
         logger.LogInformation(
-            "Requesting cover letter from Azure OpenAI for job '{JobTitle}' at '{Company}'.",
+            "Requesting cover letter from Copilot SDK runtime for job '{JobTitle}' at '{Company}' using {Mode}.",
             jobPosting.Title,
-            jobPosting.CompanyName);
+            jobPosting.CompanyName,
+            settings.UsesByokProvider ? "BYOK" : "GitHub-authenticated");
 
-        var completion = (await chatClient.CompleteChatAsync(messages, cancellationToken: cancellationToken)).Value;
+        var response = await session.SendAndWaitAsync(
+            new MessageOptions
+            {
+                Prompt = prompt
+            },
+            timeout: TimeSpan.FromMinutes(2),
+            cancellationToken);
 
-        var content = completion.Content.Count > 0 && completion.Content[0].Text is not null
-            ? completion.Content[0].Text
-            : string.Empty;
+        var content = response?.Data?.Content ?? string.Empty;
 
         logger.LogInformation(
             "Received cover letter draft ({Length} chars) for job '{JobTitle}'.",
@@ -121,21 +142,21 @@ public sealed class AzureOpenAiCoverLetterDraftService(
 
         return
             $"""
-            Write a cover letter for the following job posting.
+             Write a cover letter for the following job posting.
 
-            Job: {jobPosting.Title} at {jobPosting.CompanyName} in {FormatValue(jobPosting.Location)}
-            Job URL: {FormatValue(jobPosting.SourceUrl)}
+             Job: {jobPosting.Title} at {jobPosting.CompanyName} in {FormatValue(jobPosting.Location)}
+             Job URL: {FormatValue(jobPosting.SourceUrl)}
 
-            Applicant name: {user.DisplayName}
+             Applicant name: {user.DisplayName}
 
-            Applicant's CV:
-            {cvText}
+             Applicant's CV:
+             {cvText}
 
-            Tone: {request.Tone}
-            Language: {request.Language}{guidanceLine}
+             Tone: {request.Tone}
+             Language: {request.Language}{guidanceLine}
 
-            Write a professional, personalized cover letter that highlights relevant experience from the CV.
-            """;
+             Write a professional, personalized cover letter that highlights relevant experience from the CV.
+             """;
     }
 
     private async Task<string> LoadCvTextAsync(
@@ -146,7 +167,6 @@ public sealed class AzureOpenAiCoverLetterDraftService(
         var documents = await memoryQueryService.SearchDocumentsAsync(
             userId, "cv", limit: 20, cancellationToken);
 
-        // Prefer the document linked to the canonical CV revision
         var cvDoc = documents
             .Where(d => d.Kind == DocumentKind.Cv)
             .OrderByDescending(d => d.Rank)
@@ -177,30 +197,30 @@ public sealed class AzureOpenAiCoverLetterDraftService(
 
         var draftMarkdown =
             $"""
-            # Cover Letter Draft — {jobPosting.Title} at {jobPosting.CompanyName}
+             # Cover Letter Draft — {jobPosting.Title} at {jobPosting.CompanyName}
 
-            Dear Hiring Team,
+             Dear Hiring Team,
 
-            I am excited to apply for the {jobPosting.Title} position at {jobPosting.CompanyName}. This placeholder draft is grounded in the canonical CV currently stored for {user.DisplayName} and is intended to be refined by a future model-backed drafting step before anything is shared externally.
+             I am excited to apply for the {jobPosting.Title} position at {jobPosting.CompanyName}. This placeholder draft is grounded in the canonical CV currently stored for {user.DisplayName} and is intended to be refined by a future model-backed drafting step before anything is shared externally.
 
-            ## Why I am a strong fit
-            - [Summarize the most relevant experience from canonical CV revision {canonicalCv.RevisionNumber}.]
-            - [Connect that experience to the responsibilities for {jobPosting.Title}.]
-            - [Add a company-specific motivation statement for {jobPosting.CompanyName}.]
+             ## Why I am a strong fit
+             - [Summarize the most relevant experience from canonical CV revision {canonicalCv.RevisionNumber}.]
+             - [Connect that experience to the responsibilities for {jobPosting.Title}.]
+             - [Add a company-specific motivation statement for {jobPosting.CompanyName}.]
 
-            ## Context for the next drafting step
-            - Job location: {FormatValue(jobPosting.Location)}
-            - Employment type: {FormatValue(jobPosting.EmploymentType)}
-            - Canonical CV summary: {FormatValue(canonicalCv.Summary)}
-            - Preferred tone: {FormatValue(request.Tone)}
-            - Preferred language: {FormatValue(request.Language)}
-            - Additional guidance: {guidance}
-            - Source posting: {jobPosting.SourceUrl}
+             ## Context for the next drafting step
+             - Job location: {FormatValue(jobPosting.Location)}
+             - Employment type: {FormatValue(jobPosting.EmploymentType)}
+             - Canonical CV summary: {FormatValue(canonicalCv.Summary)}
+             - Preferred tone: {FormatValue(request.Tone)}
+             - Preferred language: {FormatValue(request.Language)}
+             - Additional guidance: {guidance}
+             - Source posting: {jobPosting.SourceUrl}
 
-            Kind regards,
+             Kind regards,
 
-            {user.DisplayName}
-            """;
+             {user.DisplayName}
+             """;
 
         var promptHint =
             $"Use canonical CV revision '{canonicalCv.Id}' and job posting '{jobPosting.Id}' as the grounding inputs when replacing this placeholder with a model-generated draft.";

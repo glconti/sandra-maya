@@ -40,9 +40,10 @@ static int PrintHelp()
           history  [--json]  Print the full conversation log.
 
         The real bot is started with Telegram__ApiBaseUrl pointing at the local
-        mock server.  Set AzureOpenAi__* environment variables (or .env) before
-        running 'start' to get real AI responses.  Without credentials the bot
-        uses its built-in placeholder orchestrator.
+        mock server. Set AzureOpenAi__* environment variables (for Copilot SDK BYOK)
+        or CopilotRuntime__Model (for GitHub-authenticated Copilot sessions) before
+        running 'start' to get real AI responses. Without runtime configuration the
+        bot returns a friendly local fallback message.
 
         Examples:
           sandra-chat start

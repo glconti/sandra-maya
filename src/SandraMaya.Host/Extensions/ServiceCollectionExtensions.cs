@@ -33,6 +33,12 @@ public static class ServiceCollectionExtensions
             .ValidateOnStart();
 
         services
+            .AddOptions<CopilotRuntimeOptions>()
+            .Bind(configuration.GetSection(CopilotRuntimeOptions.SectionName))
+            .ValidateDataAnnotations()
+            .ValidateOnStart();
+
+        services
             .AddOptions<AzureOpenAiOptions>()
             .Bind(configuration.GetSection(AzureOpenAiOptions.SectionName))
             .Validate(
@@ -70,8 +76,12 @@ public static class ServiceCollectionExtensions
             sp => sp.GetRequiredService<StorageLayout>().SqlitePath,
             sp => sp.GetRequiredService<StorageLayout>().UploadsPath);
 
-        // Override the placeholder cover letter service with the real AI-powered one
-        services.AddScoped<ICoverLetterDraftService, AzureOpenAiCoverLetterDraftService>();
+        services.AddSingleton<ICopilotClientProvider, CopilotClientProvider>();
+        services.AddSingleton<CopilotRuntimeConfiguration>();
+        services.AddSingleton<CopilotConversationSessionManager>();
+
+        // Override the placeholder cover letter service with the Copilot SDK-backed one
+        services.AddScoped<ICoverLetterDraftService, CopilotSdkCoverLetterDraftService>();
 
         services.AddSingleton(sp =>
         {
@@ -142,10 +152,8 @@ public static class ServiceCollectionExtensions
 
         services.AddScoped<ToolRegistry>();
         services.AddScoped<SystemPromptBuilder>();
-
-        services.AddSingleton<ConversationHistoryStore>();
         services.AddSingleton<IAssistantSessionStore, InMemoryAssistantSessionStore>();
-        services.AddScoped<IAssistantOrchestrator, AzureOpenAiAssistantOrchestrator>();
+        services.AddScoped<IAssistantOrchestrator, CopilotSdkAssistantOrchestrator>();
         services.AddHostedService<StorageBootstrapService>();
 
         if (!string.IsNullOrWhiteSpace(telegramOptions.BotToken))

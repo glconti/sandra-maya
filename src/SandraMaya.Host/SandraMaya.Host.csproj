@@ -1,8 +1,9 @@
 <Project Sdk="Microsoft.NET.Sdk.Web">
 
   <ItemGroup>
-    <PackageReference Include="Azure.AI.OpenAI" />
+    <PackageReference Include="GitHub.Copilot.SDK" />
     <PackageReference Include="Markdig" />
+    <PackageReference Include="System.Memory.Data" />
     <PackageReference Include="UglyToad.PdfPig" />
   </ItemGroup>
 

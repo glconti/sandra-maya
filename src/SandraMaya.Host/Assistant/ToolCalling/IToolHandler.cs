@@ -21,10 +21,31 @@ public interface IToolHandler
 /// Context passed to every tool execution so tools can access the
 /// current user, session, and original inbound message.
 /// </summary>
-public sealed record ToolExecutionContext(
-    Guid UserId,
-    string SessionId,
-    InboundMessage? OriginalMessage);
+public sealed class ToolExecutionContext
+{
+    private string _sessionId;
+
+    public ToolExecutionContext(
+        Guid userId,
+        string sessionId,
+        InboundMessage? originalMessage)
+    {
+        UserId = userId;
+        _sessionId = sessionId;
+        OriginalMessage = originalMessage;
+    }
+
+    public Guid UserId { get; }
+
+    public string SessionId => _sessionId;
+
+    public InboundMessage? OriginalMessage { get; }
+
+    public void SetSessionId(string sessionId)
+    {
+        _sessionId = sessionId;
+    }
+}
 
 /// <summary>
 /// Result returned by a tool execution.

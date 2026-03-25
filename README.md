@@ -1,6 +1,6 @@
 # Maya
 
-`.NET 10` Telegram AI assistant with Azure OpenAI function calling, web browsing, job crawling, and self-improvement capabilities. Single-container Coolify deployment.
+`.NET 10` Telegram AI assistant built on the GitHub Copilot SDK, with web browsing, job crawling, MCP integration, and self-improvement capabilities. Single-container Coolify deployment.
 
 ## What Maya Can Do
 
@@ -17,14 +17,16 @@ Maya is a personal AI assistant available through Telegram. She can:
 
 ## Architecture
 
-The assistant uses Azure OpenAI's function calling (tool use) to bridge AI reasoning with real actions:
+The assistant uses the GitHub Copilot SDK to bridge agent reasoning with real actions:
 
 ```
-User (Telegram) → Message Router → Orchestrator → Azure OpenAI (with tools)
-                                        ↕
-                              Tool Registry (20+ tools)
-                                        ↕
-                    Memory / Jobs / Web / Capabilities / MCP
+User (Telegram) → Message Router → Copilot SDK Orchestrator → Copilot CLI runtime
+                                                ↕
+                                     Tool Registry (20+ tools)
+                                                ↕
+                            Memory / Jobs / Web / Capabilities / MCP
+                                                ↕
+                       GitHub-authenticated model or Azure/OpenAI BYOK provider
 ```
 
 ### Available Tools
@@ -50,20 +52,33 @@ User (Telegram) → Message Router → Orchestrator → Azure OpenAI (with tools
 
 ### Required
 
+Pick one AI runtime mode:
+
+- **GitHub-authenticated Copilot mode** — set `CopilotRuntime__Model`
+- **BYOK mode** — set the `AzureOpenAi__*` values below so the Copilot SDK uses your Azure-hosted deployment
+
 | Variable | Description |
 |----------|-------------|
 | `Telegram__BotToken` | Telegram Bot API token |
+| `CopilotRuntime__Model` | Model name for GitHub-authenticated Copilot sessions (for example `gpt-5-mini`) |
 | `AzureOpenAi__BaseUrl` | Azure OpenAI endpoint URL |
 | `AzureOpenAi__ApiKey` | Azure OpenAI API key |
-| `AzureOpenAi__DeploymentName` | Model deployment name (e.g., `gpt-4o`) |
+| `AzureOpenAi__DeploymentName` | Azure deployment/model name used by Copilot SDK BYOK |
 
 ### Optional
 
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `Storage__Root` | `App_Data` (local), `/data` (container) | Root storage path |
+| `CopilotRuntime__CliPath` | empty | Optional path to the `copilot` CLI executable |
+| `CopilotRuntime__GitHubToken` | empty | Optional GitHub token for Copilot-authenticated sessions |
+| `CopilotRuntime__UseLoggedInUser` | `true` | Whether to use the logged-in `copilot`/GitHub CLI identity |
+| `CopilotRuntime__LogLevel` | `info` | Copilot SDK CLI log level |
+| `CopilotRuntime__WorkingDirectory` | app root | Working directory passed to Copilot sessions |
+| `CopilotRuntime__ClientName` | `Sandra Maya` | Client name reported to the Copilot runtime |
 | `AzureOpenAi__ProviderType` | `azure` | Provider type |
 | `AzureOpenAi__ApiVersion` | `2024-10-21` | API version |
+| `AzureOpenAi__WireApi` | empty | Optional BYOK wire API (for example `responses`) |
 | `Runtime__NodeCommand` | `node` | Node.js binary path |
 | `Runtime__PythonCommand` | `python` | Python binary path |
 | `Runtime__PlaywrightCommand` | `node` | Playwright CLI path |
@@ -115,8 +130,11 @@ The binary is output to `tools/SandraMaya.ChatCli/bin/Debug/net10.0/sandra-chat.
 ### Quick start
 
 ```powershell
-# 1. Provide Azure OpenAI credentials with dotnet user-secrets or environment variables
-#    `sandra-chat start` launches the host in Development so dotnet user-secrets are loaded.
+# 1a. GitHub-authenticated Copilot mode
+$env:CopilotRuntime__Model = "gpt-5-mini"
+
+# 1b. Or configure Azure BYOK for the Copilot SDK instead
+#     `sandra-chat start` launches the host in Development so dotnet user-secrets are loaded.
 $env:AzureOpenAi__BaseUrl = "https://your-resource.openai.azure.com/"
 $env:AzureOpenAi__ApiKey  = "your-key"
 $env:AzureOpenAi__DeploymentName = "gpt-4o"

@@ -3,7 +3,7 @@ using Markdig;
 
 namespace SandraMaya.Host.Telegram;
 
-// Converts standard markdown (as produced by Azure OpenAI) to the HTML subset
+// Converts standard markdown (as produced by the Copilot SDK runtime) to the HTML subset
 // supported by Telegram's sendMessage parse_mode=HTML.
 //
 // Telegram supports: <b>, <i>, <u>, <s>, <code>, <pre>, <a href>, <blockquote>

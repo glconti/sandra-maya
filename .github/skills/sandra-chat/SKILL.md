@@ -5,6 +5,13 @@ description: 'Conducts live, stateful conversations with a locally running Maya 
 
 # Interacting with Maya bot via sandra-chat
 
+This repository skill is a **development-time testing aid for Copilot CLI**.
+It helps you run and verify the local Maya bot during development.
+It is **not** one of Maya's runtime self-improvement capabilities.
+Maya's runtime self-improvement path uses the in-app capability tools
+(`capability_propose`, `capability_list`, `capability_execute`) and generated scripts,
+not files under `.github\skills\`.
+
 Use the `sandra-chat` CLI directly from the shell tool to start a local bot session, send messages, inspect replies, and tear down cleanly.
 The CLI does **not** use the real Telegram API — it runs a local mock server so no real account or token is needed.
 
@@ -30,6 +37,7 @@ sandra-chat stop
 - The user asks to test Maya end-to-end through the local bot runtime
 - The user wants to verify bot replies or conversation flow without real Telegram
 - The user wants to run a live multi-turn chat against the local bot during development
+- The user wants to verify Maya's runtime tools/capabilities by talking to the bot itself
 - Keywords: maya, sandra-chat, telegram mock, bot testing, conversation flow, local bot
 
 ## Prerequisites
@@ -54,6 +62,13 @@ dotnet build .\tools\SandraMaya.ChatCli\SandraMaya.ChatCli.csproj
 4. Stop the session with `sandra-chat stop`.
 
 Use `status --json` if you need to check whether a session is already running before starting a new one.
+
+## Running without model configuration
+
+`sandra-chat` can still be used when Maya has no Copilot runtime configured.
+In that case, the bot starts normally and replies with the explicit fallback message
+that the Copilot runtime is not configured. This is useful for testing bot startup,
+routing, session lifecycle, and the mock Telegram plumbing without real credentials.
 
 ## Commands
 
@@ -148,4 +163,3 @@ sandra-chat stop
 ## Specific tasks
 
 - **Testing bot flows end-to-end** — [references/testing-flows.md](references/testing-flows.md)
-- **Running without Azure OpenAI credentials** — [references/placeholder-mode.md](references/placeholder-mode.md)

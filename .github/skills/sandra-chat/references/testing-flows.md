@@ -1,5 +1,10 @@
 # Testing Bot Flows End-to-End
 
+This file describes how to test the running Maya bot during development.
+It does **not** define Maya runtime skills.
+If you want to verify Maya's self-improvement behavior, do that through chat by exercising
+the runtime capability tools (`capability_propose`, `capability_list`, `capability_execute`).
+
 Use `sandra-chat start` / `sandra-chat send` / `sandra-chat stop` to exercise complete
 conversation paths against the real Maya codebase.
 
@@ -22,13 +27,13 @@ conversation paths against the real Maya codebase.
 
 ## Handling timeouts
 
-If the bot is slow (e.g., real Azure OpenAI call), increase `timeout_seconds`:
+If the bot is slow (for example a real Copilot SDK turn through a remote model provider), increase `timeout_seconds`:
 
 ```bash
 sandra-chat send "Summarise all jobs" --timeout 60
 ```
 
-Default is 30 seconds — sufficient for the placeholder orchestrator.
+Default is 30 seconds — sufficient for local smoke tests and most short turns.
 
 ## Testing multi-turn context
 
