@@ -15,6 +15,8 @@ public interface ITelegramBotApiClient
 
     Task SendMessageAsync(long chatId, string text, string? parseMode, CancellationToken cancellationToken);
 
+    Task SendChatActionAsync(long chatId, string action, CancellationToken cancellationToken);
+
     Task<TelegramFile?> GetFileAsync(string fileId, CancellationToken cancellationToken);
 
     Task<byte[]> DownloadFileAsync(string filePath, CancellationToken cancellationToken);

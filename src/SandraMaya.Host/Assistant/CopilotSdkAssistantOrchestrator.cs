@@ -1,6 +1,7 @@
 using System.Text;
 using GitHub.Copilot.SDK;
 using SandraMaya.Host.Assistant.ToolCalling;
+using SandraMaya.Host.Storage;
 using UglyToad.PdfPig;
 using UglyToad.PdfPig.Content;
 
@@ -13,6 +14,8 @@ public sealed class CopilotSdkAssistantOrchestrator : IAssistantOrchestrator
     private readonly ToolRegistry _toolRegistry;
     private readonly IUserResolutionService _userResolution;
     private readonly SystemPromptBuilder _systemPromptBuilder;
+    private readonly StorageLayout _storageLayout;
+    private readonly IActiveAssistantTurnRegistry _turnRegistry;
     private readonly ILogger<CopilotSdkAssistantOrchestrator> _logger;
 
     public CopilotSdkAssistantOrchestrator(
@@ -21,6 +24,8 @@ public sealed class CopilotSdkAssistantOrchestrator : IAssistantOrchestrator
         ToolRegistry toolRegistry,
         IUserResolutionService userResolution,
         SystemPromptBuilder systemPromptBuilder,
+        StorageLayout storageLayout,
+        IActiveAssistantTurnRegistry turnRegistry,
         ILogger<CopilotSdkAssistantOrchestrator> logger)
     {
         _sessionManager = sessionManager;
@@ -28,6 +33,8 @@ public sealed class CopilotSdkAssistantOrchestrator : IAssistantOrchestrator
         _toolRegistry = toolRegistry;
         _userResolution = userResolution;
         _systemPromptBuilder = systemPromptBuilder;
+        _storageLayout = storageLayout;
+        _turnRegistry = turnRegistry;
         _logger = logger;
     }
 
@@ -40,6 +47,7 @@ public sealed class CopilotSdkAssistantOrchestrator : IAssistantOrchestrator
 
         var userId = await _userResolution.ResolveUserIdAsync(message.Sender, cancellationToken);
         var systemPrompt = await _systemPromptBuilder.BuildAsync(userId, cancellationToken);
+        var skillDirectories = GetSkillDirectories(cancellationToken);
 
         _logger.LogInformation(
             "Processing inbound message {MessageId} for Copilot-backed conversation {ConversationId} (user {UserId}).",
@@ -50,8 +58,8 @@ public sealed class CopilotSdkAssistantOrchestrator : IAssistantOrchestrator
         var userText = ResolveUserText(message);
         var toolContext = new ToolExecutionContext(userId, string.Empty, message);
 
-        var createConfig = BuildCreateConfig(settings, systemPrompt, toolContext);
-        var resumeConfig = BuildResumeConfig(settings, systemPrompt, toolContext);
+        var createConfig = BuildCreateConfig(settings, systemPrompt, toolContext, skillDirectories);
+        var resumeConfig = BuildResumeConfig(settings, systemPrompt, toolContext, skillDirectories);
 
         try
         {
@@ -62,6 +70,7 @@ public sealed class CopilotSdkAssistantOrchestrator : IAssistantOrchestrator
                 cancellationToken);
 
             toolContext.SetSessionId(session.AssistantSession.SessionId);
+            using var activeTurn = _turnRegistry.Track(message.Conversation, session.Session);
 
             var response = await session.Session.SendAndWaitAsync(
                 new MessageOptions
@@ -81,6 +90,15 @@ public sealed class CopilotSdkAssistantOrchestrator : IAssistantOrchestrator
         }
         catch (Exception ex)
         {
+            if (_turnRegistry.TryConsumeStopRequest(message.Conversation))
+            {
+                _logger.LogInformation(
+                    "Assistant turn for conversation {ConversationId} was stopped by user request.",
+                    message.Conversation.ConversationId);
+
+                return new AssistantTurnResult("stopped-session", []);
+            }
+
             _logger.LogError(
                 ex,
                 "Error calling Copilot SDK for conversation {ConversationId}.",
@@ -97,7 +115,8 @@ public sealed class CopilotSdkAssistantOrchestrator : IAssistantOrchestrator
     private SessionConfig BuildCreateConfig(
         CopilotSessionSettings settings,
         string systemPrompt,
-        ToolExecutionContext toolContext)
+        ToolExecutionContext toolContext,
+        IReadOnlyList<string> skillDirectories)
     {
         return new SessionConfig
         {
@@ -105,11 +124,14 @@ public sealed class CopilotSdkAssistantOrchestrator : IAssistantOrchestrator
             Model = settings.Model,
             Provider = settings.Provider,
             WorkingDirectory = settings.WorkingDirectory,
+            Streaming = true,
             SystemMessage = new SystemMessageConfig
             {
                 Mode = SystemMessageMode.Append,
                 Content = systemPrompt
             },
+            SkillDirectories = [.. skillDirectories],
+            DisabledSkills = [],
             AvailableTools = [.. _toolRegistry.GetToolNames()],
             Tools = [.. _toolRegistry.GetToolFunctions(toolContext)],
             InfiniteSessions = new InfiniteSessionConfig
@@ -123,7 +145,8 @@ public sealed class CopilotSdkAssistantOrchestrator : IAssistantOrchestrator
     private ResumeSessionConfig BuildResumeConfig(
         CopilotSessionSettings settings,
         string systemPrompt,
-        ToolExecutionContext toolContext)
+        ToolExecutionContext toolContext,
+        IReadOnlyList<string> skillDirectories)
     {
         return new ResumeSessionConfig
         {
@@ -131,11 +154,14 @@ public sealed class CopilotSdkAssistantOrchestrator : IAssistantOrchestrator
             Model = settings.Model,
             Provider = settings.Provider,
             WorkingDirectory = settings.WorkingDirectory,
+            Streaming = true,
             SystemMessage = new SystemMessageConfig
             {
                 Mode = SystemMessageMode.Append,
                 Content = systemPrompt
             },
+            SkillDirectories = [.. skillDirectories],
+            DisabledSkills = [],
             AvailableTools = [.. _toolRegistry.GetToolNames()],
             Tools = [.. _toolRegistry.GetToolFunctions(toolContext)],
             InfiniteSessions = new InfiniteSessionConfig
@@ -144,6 +170,19 @@ public sealed class CopilotSdkAssistantOrchestrator : IAssistantOrchestrator
             },
             OnPermissionRequest = PermissionHandler.ApproveAll
         };
+    }
+
+    private IReadOnlyList<string> GetSkillDirectories(CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+
+        return new[]
+        {
+            _storageLayout.RuntimeSkillsPath
+        }
+        .Where(path => !string.IsNullOrWhiteSpace(path))
+        .Distinct(StringComparer.OrdinalIgnoreCase)
+        .ToArray();
     }
 
     private static string ResolveUserText(InboundMessage message)

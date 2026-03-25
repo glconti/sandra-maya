@@ -79,6 +79,7 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<ICopilotClientProvider, CopilotClientProvider>();
         services.AddSingleton<CopilotRuntimeConfiguration>();
         services.AddSingleton<CopilotConversationSessionManager>();
+        services.AddSingleton<IActiveAssistantTurnRegistry, InMemoryActiveAssistantTurnRegistry>();
 
         // Override the placeholder cover letter service with the Copilot SDK-backed one
         services.AddScoped<ICoverLetterDraftService, CopilotSdkCoverLetterDraftService>();

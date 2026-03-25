@@ -215,6 +215,15 @@ internal sealed class TelegramDeleteWebhookRequest
     public bool DropPendingUpdates { get; init; }
 }
 
+internal sealed class TelegramSendChatActionRequest
+{
+    [JsonPropertyName("chat_id")]
+    public long ChatId { get; init; }
+
+    [JsonPropertyName("action")]
+    public string Action { get; init; } = string.Empty;
+}
+
 internal sealed class TelegramSendMessageRequest
 {
     [JsonPropertyName("chat_id")]
@@ -225,4 +234,9 @@ internal sealed class TelegramSendMessageRequest
 
     [JsonPropertyName("parse_mode")]
     public string? ParseMode { get; init; }
+}
+
+public static class TelegramChatActions
+{
+    public const string Typing = "typing";
 }

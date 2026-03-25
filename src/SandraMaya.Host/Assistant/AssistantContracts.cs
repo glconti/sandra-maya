@@ -1,3 +1,5 @@
+using GitHub.Copilot.SDK;
+
 namespace SandraMaya.Host.Assistant;
 
 public static class TransportPlatforms
@@ -19,6 +21,12 @@ public sealed record ConversationReference(
     string Platform,
     string ConversationId,
     string UserId);
+
+public static class ConversationReferenceExtensions
+{
+    public static string ToKey(this ConversationReference conversation) =>
+        $"{conversation.Platform}:{conversation.ConversationId}";
+}
 
 public sealed record UserReference(
     string Id,
@@ -82,4 +90,13 @@ public interface IInboundMessageRouter
 public interface IOutboundMessageDispatcher
 {
     Task DispatchAsync(OutboundMessage message, CancellationToken cancellationToken);
+}
+
+public interface IActiveAssistantTurnRegistry
+{
+    IDisposable Track(ConversationReference conversation, CopilotSession session);
+
+    Task<bool> RequestStopAsync(ConversationReference conversation, CancellationToken cancellationToken);
+
+    bool TryConsumeStopRequest(ConversationReference conversation);
 }

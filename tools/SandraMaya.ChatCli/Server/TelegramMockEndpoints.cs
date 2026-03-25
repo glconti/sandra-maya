@@ -17,6 +17,7 @@ public static class TelegramMockEndpoints
         // The bot token is part of the URL path, e.g. /bot{token}/getUpdates
         app.MapPost("/bot{token}/deleteWebhook", DeleteWebhook);
         app.MapPost("/bot{token}/getUpdates", GetUpdates);
+        app.MapPost("/bot{token}/sendChatAction", SendChatAction);
         app.MapPost("/bot{token}/sendMessage", SendMessage);
         app.MapPost("/bot{token}/getFile", GetFile);
         app.MapGet("/file/bot{token}/{**filePath}", DownloadFile);
@@ -116,6 +117,25 @@ public static class TelegramMockEndpoints
         };
 
         return Results.Ok(Envelope(sentMessage));
+    }
+
+    private static async Task<IResult> SendChatAction(
+        string token,
+        HttpRequest request,
+        ChatState state,
+        CancellationToken ct)
+    {
+        try
+        {
+            var body = await new StreamReader(request.Body).ReadToEndAsync(ct);
+            _ = JsonNode.Parse(body);
+        }
+        catch (JsonException)
+        {
+            // Ignore malformed bodies for the mock; Telegram client only needs an ok response.
+        }
+
+        return Results.Ok(Envelope(true));
     }
 
     private static IResult GetFile(string token) =>

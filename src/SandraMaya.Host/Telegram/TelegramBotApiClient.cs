@@ -84,6 +84,23 @@ public sealed class TelegramBotApiClient : ITelegramBotApiClient
         _ = await ReadResponseAsync<TelegramMessage>(response, cancellationToken);
     }
 
+    public async Task SendChatActionAsync(long chatId, string action, CancellationToken cancellationToken)
+    {
+        var request = new TelegramSendChatActionRequest
+        {
+            ChatId = chatId,
+            Action = action
+        };
+
+        using var response = await _httpClient.PostAsJsonAsync(
+            BotUrl("sendChatAction"),
+            request,
+            _jsonOptions,
+            cancellationToken);
+
+        _ = await ReadResponseAsync<bool>(response, cancellationToken);
+    }
+
     public async Task<TelegramFile?> GetFileAsync(string fileId, CancellationToken cancellationToken)
     {
         var request = new TelegramGetFileRequest { FileId = fileId };
