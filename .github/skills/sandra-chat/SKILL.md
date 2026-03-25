@@ -7,10 +7,9 @@ description: 'Conducts live, stateful conversations with a locally running Maya 
 
 This repository skill is a **development-time testing aid for Copilot CLI**.
 It helps you run and verify the local Maya bot during development.
-It is **not** one of Maya's runtime self-improvement capabilities.
-Maya's runtime self-improvement path uses the in-app capability tools
-(`capability_propose`, `capability_list`, `capability_execute`) and generated scripts,
-not files under `.github\skills\`.
+It is **not** one of Maya's runtime skills.
+Maya runtime skills are discovered by the Copilot SDK from configured
+`SkillDirectories`, not from helper tools or files under `.github\skills\`.
 
 Use the `sandra-chat` CLI directly from the shell tool to start a local bot session, send messages, inspect replies, and tear down cleanly.
 The CLI does **not** use the real Telegram API — it runs a local mock server so no real account or token is needed.
@@ -37,7 +36,7 @@ sandra-chat stop
 - The user asks to test Maya end-to-end through the local bot runtime
 - The user wants to verify bot replies or conversation flow without real Telegram
 - The user wants to run a live multi-turn chat against the local bot during development
-- The user wants to verify Maya's runtime tools/capabilities by talking to the bot itself
+- The user wants to verify Maya's runtime tools or SDK-discovered skills by talking to the bot itself
 - Keywords: maya, sandra-chat, telegram mock, bot testing, conversation flow, local bot
 
 ## Prerequisites

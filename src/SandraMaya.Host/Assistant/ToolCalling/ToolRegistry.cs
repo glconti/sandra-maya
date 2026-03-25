@@ -11,7 +11,9 @@ public sealed class ToolRegistry
     private readonly Dictionary<string, IToolHandler> _handlers;
     private readonly ILogger<ToolRegistry> _logger;
 
-    public ToolRegistry(IEnumerable<IToolHandler> handlers, ILogger<ToolRegistry> logger)
+    public ToolRegistry(
+        IEnumerable<IToolHandler> handlers,
+        ILogger<ToolRegistry> logger)
     {
         _handlers = new Dictionary<string, IToolHandler>(StringComparer.OrdinalIgnoreCase);
         _logger = logger;
@@ -36,27 +38,27 @@ public sealed class ToolRegistry
     /// </summary>
     public IReadOnlyList<AIFunction> GetToolFunctions(ToolExecutionContext context)
     {
-        return _handlers.Values
+        return GetAllEffectiveHandlers()
             .Select(handler => (AIFunction)new CopilotToolFunction(handler, context))
             .ToList();
     }
 
     public IReadOnlyList<string> GetToolNames() =>
-        _handlers.Keys.ToList();
+        GetAllEffectiveHandlers().Select(handler => handler.Name).ToList();
 
     public IToolHandler? GetHandler(string toolName)
     {
-        _handlers.TryGetValue(toolName, out var handler);
-        return handler;
+        return GetAllEffectiveHandlers().FirstOrDefault(handler =>
+            string.Equals(handler.Name, toolName, StringComparison.OrdinalIgnoreCase));
     }
 
     public IReadOnlyList<IToolHandler> GetAllHandlers() =>
-        _handlers.Values.ToList();
+        GetAllEffectiveHandlers();
 
-    public int Count => _handlers.Count;
+    public int Count => GetAllEffectiveHandlers().Count;
 
     /// <summary>
-    /// Dynamically registers a tool handler at runtime (used by MCP and capability system).
+    /// Dynamically registers a tool handler at runtime.
     /// </summary>
     public void Register(IToolHandler handler)
     {
@@ -82,5 +84,12 @@ public sealed class ToolRegistry
             _logger.LogInformation("Unregistered tool: {ToolName}", toolName);
         }
         return removed;
+    }
+
+    private IReadOnlyList<IToolHandler> GetAllEffectiveHandlers()
+    {
+        return _handlers.Values
+            .OrderBy(handler => handler.Name, StringComparer.OrdinalIgnoreCase)
+            .ToArray();
     }
 }

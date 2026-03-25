@@ -42,8 +42,7 @@ public sealed class SystemPromptBuilder
         - Use your tools proactively. If the user asks about jobs, search and crawl. If they send a CV, ingest it.
         - Remember things by saving notes to memory. Retrieve context from memory when relevant.
         - Respond in the same language the user writes in.
-        - When you cannot fulfill a request with existing tools, explain what you would need and
-          consider proposing a new capability if it could be built as a script.
+        - When you cannot fulfill a request with the available tools or SDK-discovered skills, explain the limitation clearly.
         - Be concise but thorough. Prefer structured responses (bullet points, tables) for complex data.
         - When browsing the web, summarize what you find rather than dumping raw HTML.
         """;

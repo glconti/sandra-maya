@@ -10,13 +10,9 @@ public sealed class StorageOptions
 
     public string? UploadsPath { get; init; }
 
-    public string? CapabilitiesPath { get; init; }
-
-    public string? GeneratedCapabilitiesPath { get; init; }
+    public string? RuntimeSkillsPath { get; init; }
 
     public string? WorkPath { get; init; }
 
     public string? TempPath { get; init; }
-
-    public string CapabilityRegistryFileName { get; init; } = "capability-registry.json";
 }

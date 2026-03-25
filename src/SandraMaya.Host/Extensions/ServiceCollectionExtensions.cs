@@ -1,11 +1,7 @@
 using Microsoft.Extensions.Options;
+using SandraMaya.Infrastructure;
 using SandraMaya.Application.Abstractions;
 using SandraMaya.Application.Contracts;
-using SandraMaya.Capabilities.Abstractions;
-using SandraMaya.Capabilities.Configuration;
-using SandraMaya.Capabilities.Persistence;
-using SandraMaya.Capabilities.Services;
-using SandraMaya.Infrastructure;
 using SandraMaya.Host.Assistant;
 using SandraMaya.Host.Assistant.ToolCalling;
 using SandraMaya.Host.Assistant.ToolCalling.Tools;
@@ -51,18 +47,12 @@ public static class ServiceCollectionExtensions
             .AddOptions<StorageOptions>()
             .Bind(configuration.GetSection(StorageOptions.SectionName))
             .Validate(options => !string.IsNullOrWhiteSpace(options.Root), "Storage:Root is required.")
-            .Validate(options => !string.IsNullOrWhiteSpace(options.CapabilityRegistryFileName), "Storage:CapabilityRegistryFileName is required.")
             .ValidateOnStart();
 
         services
             .AddOptions<RuntimeOptions>()
             .Bind(configuration.GetSection(RuntimeOptions.SectionName))
-            .Validate(options => !string.IsNullOrWhiteSpace(options.DotNetCommand), "Runtime:DotNetCommand is required.")
-            .Validate(options => !string.IsNullOrWhiteSpace(options.NodeCommand), "Runtime:NodeCommand is required.")
             .Validate(options => !string.IsNullOrWhiteSpace(options.PlaywrightCommand), "Runtime:PlaywrightCommand is required.")
-            .Validate(options => !string.IsNullOrWhiteSpace(options.PythonCommand), "Runtime:PythonCommand is required.")
-            .Validate(options => !string.IsNullOrWhiteSpace(options.PowerShellCommand), "Runtime:PowerShellCommand is required.")
-            .Validate(options => !string.IsNullOrWhiteSpace(options.BashCommand), "Runtime:BashCommand is required.")
             .ValidateOnStart();
 
         services.AddSingleton(sp =>
@@ -84,30 +74,6 @@ public static class ServiceCollectionExtensions
         // Override the placeholder cover letter service with the Copilot SDK-backed one
         services.AddScoped<ICoverLetterDraftService, CopilotSdkCoverLetterDraftService>();
 
-        services.AddSingleton(sp =>
-        {
-            var options = sp.GetRequiredService<IOptions<RuntimeOptions>>().Value;
-            return new CapabilityRuntimeCommandOptions
-            {
-                DotNetCommand = options.DotNetCommand,
-                NodeCommand = options.NodeCommand,
-                PlaywrightCommand = options.PlaywrightCommand,
-                PythonCommand = options.PythonCommand,
-                PowerShellCommand = options.PowerShellCommand,
-                BashCommand = options.BashCommand
-            };
-        });
-
-        services.AddSingleton<ICapabilityStore>(sp =>
-        {
-            var storage = sp.GetRequiredService<StorageLayout>();
-            var options = sp.GetRequiredService<IOptions<StorageOptions>>().Value;
-            return new FileCapabilityStore(new CapabilityStoreOptions(storage.CapabilitiesPath, options.CapabilityRegistryFileName));
-        });
-        services.AddSingleton<ICapabilityRegistryService, CapabilityRegistryService>();
-        services.AddSingleton<ICapabilityActivityService, CapabilityActivityService>();
-        services.AddSingleton<ICapabilityExecutionPlanResolver, CapabilityExecutionPlanResolver>();
-
         // MCP client manager (stub — config management only)
         services.AddSingleton<McpClientManager>();
 
@@ -127,6 +93,7 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<IToolHandler, JobListSitesTool>();
         services.AddScoped<IToolHandler, JobSearchSavedTool>();
         services.AddScoped<IToolHandler, JobCrawlTool>();
+        services.AddScoped<IToolHandler, JobsIngestBatchTool>();
         services.AddScoped<IToolHandler, JobTrackApplicationTool>();
         services.AddScoped<IToolHandler, JobListApplicationsTool>();
         services.AddScoped<IToolHandler, JobActivitySummaryTool>();
@@ -139,12 +106,6 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<IToolHandler, WebSearchTool>();
         services.AddSingleton<IToolHandler, WebExtractStructuredTool>();
         services.AddSingleton<IToolHandler, WebScreenshotTool>();
-
-        // Capability tools
-        services.AddScoped<IToolHandler, CapabilityListTool>();
-        services.AddScoped<IToolHandler, CapabilityProposeTool>();
-        services.AddScoped<IToolHandler, CapabilityExecuteTool>();
-        services.AddScoped<IToolHandler, CapabilitySetStatusTool>();
 
         // MCP management tools
         services.AddSingleton<IToolHandler, McpListServersTool>();

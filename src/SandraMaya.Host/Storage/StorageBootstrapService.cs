@@ -14,8 +14,7 @@ public sealed class StorageBootstrapService(
             _storageLayout.Root,
             Path.GetDirectoryName(_storageLayout.SqlitePath) ?? _storageLayout.Root,
             _storageLayout.UploadsPath,
-            _storageLayout.CapabilitiesPath,
-            _storageLayout.GeneratedCapabilitiesPath,
+            _storageLayout.RuntimeSkillsPath,
             _storageLayout.WorkPath,
             _storageLayout.TempPath
         };
@@ -30,11 +29,11 @@ public sealed class StorageBootstrapService(
         }
 
         _logger.LogInformation(
-            "Storage initialized at {Root}. SQLite: {SqlitePath}; uploads: {UploadsPath}; capabilities: {CapabilitiesPath}",
+            "Storage initialized at {Root}. SQLite: {SqlitePath}; uploads: {UploadsPath}; skills: {RuntimeSkillsPath}",
             _storageLayout.Root,
             _storageLayout.SqlitePath,
             _storageLayout.UploadsPath,
-            _storageLayout.CapabilitiesPath);
+            _storageLayout.RuntimeSkillsPath);
 
         return Task.CompletedTask;
     }

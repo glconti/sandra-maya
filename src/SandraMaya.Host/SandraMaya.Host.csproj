@@ -9,7 +9,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\SandraMaya.Application\SandraMaya.Application.csproj" />
-    <ProjectReference Include="..\SandraMaya.Capabilities\SandraMaya.Capabilities.csproj" />
     <ProjectReference Include="..\SandraMaya.Infrastructure\SandraMaya.Infrastructure.csproj" />
   </ItemGroup>
 

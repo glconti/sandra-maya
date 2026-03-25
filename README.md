@@ -1,6 +1,6 @@
 # Maya
 
-`.NET 10` Telegram AI assistant built on the GitHub Copilot SDK, with web browsing, job crawling, MCP integration, and self-improvement capabilities. Single-container Coolify deployment.
+`.NET 10` Telegram AI assistant built on the GitHub Copilot SDK, with web browsing, job crawling, MCP integration, and SDK skill discovery. Single-container Coolify deployment.
 
 ## What Maya Can Do
 
@@ -12,7 +12,7 @@ Maya is a personal AI assistant available through Telegram. She can:
 - **Track job applications** — log which jobs you've applied to, track status (Applied → Interviewing → Offer → etc.)
 - **Write cover letters** — generate AI-powered cover letters tailored to specific job postings using your CV
 - **Browse the web** — navigate any website, extract content, take screenshots, search for information
-- **Self-improve** — propose and install new capabilities as Node.js/Python/PowerShell scripts
+- **Use SDK skills** — discover additional workflow skills from configured Copilot SDK skill directories
 - **Connect to MCP servers** — extend functionality by connecting to Model Context Protocol servers
 
 ## Architecture
@@ -22,9 +22,9 @@ The assistant uses the GitHub Copilot SDK to bridge agent reasoning with real ac
 ```
 User (Telegram) → Message Router → Copilot SDK Orchestrator → Copilot CLI runtime
                                                 ↕
-                                     Tool Registry (20+ tools)
+                                          Tool Registry
                                                 ↕
-                            Memory / Jobs / Web / Capabilities / MCP
+                            Memory / Jobs / Web / MCP + SDK skills
                                                 ↕
                        GitHub-authenticated model or Azure/OpenAI BYOK provider
 ```
@@ -38,14 +38,12 @@ User (Telegram) → Message Router → Copilot SDK Orchestrator → Copilot CLI 
 | Jobs | `job_list_sites`, `job_search_saved`, `job_crawl`, `job_track_application`, `job_list_applications`, `job_activity_summary` | Job search and tracking |
 | Cover Letter | `cover_letter_draft` | AI-powered cover letter generation |
 | Web | `web_browse`, `web_search`, `web_extract_structured`, `web_screenshot` | Playwright-based web interaction |
-| Capabilities | `capability_list`, `capability_propose`, `capability_execute` | Self-improvement lifecycle |
 | MCP | `mcp_list_servers`, `mcp_add_server`, `mcp_remove_server` | MCP server management |
 
 ## Project Layout
 
 - `src/SandraMaya.Application` — domain models, contracts, and abstractions
 - `src/SandraMaya.Infrastructure` — SQLite persistence, file storage, PDF conversion
-- `src/SandraMaya.Capabilities` — capability registry, execution, and activity tracking
 - `src/SandraMaya.Host` — ASP.NET Core host, orchestrator, tool handlers, Playwright integration
 
 ## Configuration
@@ -79,15 +77,12 @@ Pick one AI runtime mode:
 | `AzureOpenAi__ProviderType` | `azure` | Provider type |
 | `AzureOpenAi__ApiVersion` | `2024-10-21` | API version |
 | `AzureOpenAi__WireApi` | empty | Optional BYOK wire API (for example `responses`) |
-| `Runtime__NodeCommand` | `node` | Node.js binary path |
-| `Runtime__PythonCommand` | `python` | Python binary path |
 | `Runtime__PlaywrightCommand` | `node` | Playwright CLI path |
 
-Storage paths are resolved from `Storage__Root`:
+Storage paths are resolved as follows:
 - `Storage__SqlitePath` — SQLite database
 - `Storage__UploadsPath` — uploaded files
-- `Storage__CapabilitiesPath` — capability registry
-- `Storage__GeneratedCapabilitiesPath` — AI-generated capability scripts
+- `Storage__RuntimeSkillsPath` — SDK skill root discovered by the Copilot SDK, resolved from the host content root
 - `Storage__WorkPath` — working directory for Playwright scripts
 - `Storage__TempPath` — temporary files
 
@@ -204,22 +199,18 @@ docker build \
 ```
 
 - Single container: ASP.NET Core + Telegram polling + Node.js + Python + Playwright Chromium
-- Mount a persistent volume at `/data` for SQLite, uploads, and capabilities
+- Mount a persistent volume at `/data` for SQLite, uploads, and SDK skill folders
 - Playwright browsers are installed by default (`INSTALL_PLAYWRIGHT_BROWSERS=true`)
 - Health check: `GET /health` on port `8080`
 - Set `INSTALL_PLAYWRIGHT_BROWSERS=false` at build time to skip browser installation (disables web browsing tools)
 
-## Self-Improvement
+## SDK Skills
 
-Maya can extend herself by:
+Maya can load additional Copilot SDK skills from configured skill directories.
 
-1. Recognizing a need the AI can't fulfill with existing tools
-2. Proposing a new capability (Node.js, Python, or PowerShell script)
-3. Registering the capability in the registry
-4. Executing it on future requests
-
-**Safety tiers:**
-- **Auto-enable**: Capabilities with `local-readonly` containment (no network, no writes)
-- **Approval required**: Capabilities needing `networked` or `elevated` containment — Maya asks the user via Telegram before first execution
+- By default, put each skill in its own folder under `src\SandraMaya.Host\Assistant\Skills\` (or the path configured by `Storage__RuntimeSkillsPath`)
+- Keep `SKILL.md` and any scripts/assets together inside that folder
+- The host preserves SDK `SkillDirectories` support so the Copilot SDK can discover those folders directly
+- Generic helper tools for listing, saving, or executing skills are intentionally not part of the runtime surface
 
 

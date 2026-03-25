@@ -6,8 +6,7 @@ public sealed record StorageLayout(
     string Root,
     string SqlitePath,
     string UploadsPath,
-    string CapabilitiesPath,
-    string GeneratedCapabilitiesPath,
+    string RuntimeSkillsPath,
     string WorkPath,
     string TempPath)
 {
@@ -21,14 +20,11 @@ public sealed record StorageLayout(
         }
 
         var root = ResolveRoot(contentRootPath, options.Root);
-        var capabilitiesPath = ResolveChildPath(root, options.CapabilitiesPath, "capabilities");
-
         return new StorageLayout(
             Root: root,
             SqlitePath: ResolveChildPath(root, options.SqlitePath, "sqlite", "sandra-maya.db"),
             UploadsPath: ResolveChildPath(root, options.UploadsPath, "files"),
-            CapabilitiesPath: capabilitiesPath,
-            GeneratedCapabilitiesPath: ResolveChildPath(root, options.GeneratedCapabilitiesPath, "capabilities", "generated"),
+            RuntimeSkillsPath: ResolveContentPath(contentRootPath, options.RuntimeSkillsPath, "Assistant", "Skills"),
             WorkPath: ResolveChildPath(root, options.WorkPath, "work"),
             TempPath: ResolveChildPath(root, options.TempPath, "tmp"));
     }
@@ -57,5 +53,18 @@ public sealed record StorageLayout(
             Path.IsPathRooted(configuredPath)
                 ? configuredPath
                 : Path.Combine(root, configuredPath));
+    }
+
+    private static string ResolveContentPath(string contentRootPath, string? configuredPath, params string[] fallbackSegments)
+    {
+        if (string.IsNullOrWhiteSpace(configuredPath))
+        {
+            return Path.GetFullPath(Path.Combine(contentRootPath, Path.Combine(fallbackSegments)));
+        }
+
+        return Path.GetFullPath(
+            Path.IsPathRooted(configuredPath)
+                ? configuredPath
+                : Path.Combine(contentRootPath, configuredPath));
     }
 }

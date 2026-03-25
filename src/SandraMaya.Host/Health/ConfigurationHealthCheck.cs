@@ -41,8 +41,7 @@ public sealed class ConfigurationHealthCheck : IHealthCheck
             ["storageRoot"] = _storageLayout.Root,
             ["sqlitePath"] = _storageLayout.SqlitePath,
             ["uploadsPath"] = _storageLayout.UploadsPath,
-            ["capabilitiesPath"] = _storageLayout.CapabilitiesPath,
-            ["generatedCapabilitiesPath"] = _storageLayout.GeneratedCapabilitiesPath
+            ["runtimeSkillsPath"] = _storageLayout.RuntimeSkillsPath
         };
 
         if (string.IsNullOrWhiteSpace(_telegramOptions.Value.BotToken))
@@ -54,8 +53,7 @@ public sealed class ConfigurationHealthCheck : IHealthCheck
         {
             _storageLayout.Root,
             _storageLayout.UploadsPath,
-            _storageLayout.CapabilitiesPath,
-            _storageLayout.GeneratedCapabilitiesPath,
+            _storageLayout.RuntimeSkillsPath,
             _storageLayout.WorkPath,
             _storageLayout.TempPath,
             Path.GetDirectoryName(_storageLayout.SqlitePath) ?? _storageLayout.Root

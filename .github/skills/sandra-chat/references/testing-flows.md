@@ -2,8 +2,8 @@
 
 This file describes how to test the running Maya bot during development.
 It does **not** define Maya runtime skills.
-If you want to verify Maya's self-improvement behavior, do that through chat by exercising
-the runtime capability tools (`capability_propose`, `capability_list`, `capability_execute`).
+If you want to verify Maya's runtime skill behavior, do that through chat by
+exercising the relevant SDK-discovered skill in a real bot session.
 
 Use `sandra-chat start` / `sandra-chat send` / `sandra-chat stop` to exercise complete
 conversation paths against the real Maya codebase.

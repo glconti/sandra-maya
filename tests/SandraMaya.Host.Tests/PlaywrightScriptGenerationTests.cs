@@ -155,8 +155,7 @@ public sealed class PlaywrightScriptGenerationTests
             Root: tempRoot,
             SqlitePath: Path.Combine(tempRoot, "sqlite", "db.sqlite"),
             UploadsPath: Path.Combine(tempRoot, "files"),
-            CapabilitiesPath: Path.Combine(tempRoot, "capabilities"),
-            GeneratedCapabilitiesPath: Path.Combine(tempRoot, "capabilities", "generated"),
+            RuntimeSkillsPath: Path.Combine(tempRoot, "skills"),
             WorkPath: Path.Combine(tempRoot, "work"),
             TempPath: Path.Combine(tempRoot, "tmp"));
 
