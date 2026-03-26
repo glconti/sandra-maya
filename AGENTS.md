@@ -45,12 +45,16 @@ Use this order of preference:
 
 When Maya needs to extend runtime behavior in this repository, prefer these locations:
 
-- skill authoring: `src\SandraMaya.Host\Assistant\Skills\`
-- Playwright/browser helpers: `src\SandraMaya.Host\Playwright\`
-- host wiring reference (read-only unless explicitly needed): `src\SandraMaya.Host\Program.cs`
-- host configuration reference (read-only unless explicitly needed): `src\SandraMaya.Host\Configuration\`
+- skill authoring: `src/SandraMaya.Host/Assistant/Skills`
+- Playwright/browser helpers: `src/SandraMaya.Host/Playwright`
+- host wiring reference (read-only unless explicitly needed): `src/SandraMaya.Host/Program.cs`
+- host configuration reference (read-only unless explicitly needed): `src/SandraMaya.Host/Configuration`
 
-The default SDK skill directory for this repo is `src\SandraMaya.Host\Assistant\Skills\`.
+Use these repo-relative paths as the canonical aliases for those areas.
+Do not rely on machine-specific absolute paths such as `D:\...` because the checkout
+location may differ across Windows, Linux, containers, and CI.
+
+The default SDK skill directory for this repo is `src/SandraMaya.Host/Assistant/Skills`.
 Create each skill as its own folder with `SKILL.md` plus scripts/assets inside it.
 When a skill discovers jobs, route persistence through `jobs_ingest_batch` so dedup
 and ingestion invariants remain in the host.
@@ -82,6 +86,7 @@ For runtime workflow extension:
 - persist skills as normal folders under the configured SDK skill directory
 - keep `SKILL.md` and scripts together
 - prefer direct file creation and editing over helper registries
+- use deterministic repo-relative paths when referring to repository locations
 - rely on the next Copilot session create/resume for reload
 - extend an existing skill when the workflow belongs to the same domain
 - create a new skill only when it is a genuinely separate workflow

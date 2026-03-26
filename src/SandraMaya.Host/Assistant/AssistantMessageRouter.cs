@@ -68,13 +68,17 @@ public sealed class AssistantMessageRouter : IInboundMessageRouter
     {
         try
         {
-            while (await mailbox.Reader.WaitToReadAsync(CancellationToken.None))
+            while (await mailbox.Reader.WaitToReadAsync(stoppingToken))
             {
                 while (mailbox.Reader.TryRead(out var message))
                 {
                     try
                     {
-                        await ProcessMessageAsync(message, CancellationToken.None);
+                        await ProcessMessageAsync(message, stoppingToken);
+                    }
+                    catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
+                    {
+                        return;
                     }
                     catch (Exception ex)
                     {

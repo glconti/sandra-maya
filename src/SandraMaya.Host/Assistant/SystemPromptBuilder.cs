@@ -24,6 +24,7 @@ public sealed class SystemPromptBuilder
         var parts = new List<string>
         {
             CorePersona,
+            RepoAreaSection,
             BuildToolSection(),
             await BuildUserContextAsync(userId, cancellationToken)
         };
@@ -45,6 +46,22 @@ public sealed class SystemPromptBuilder
         - When you cannot fulfill a request with the available tools or SDK-discovered skills, explain the limitation clearly.
         - Be concise but thorough. Prefer structured responses (bullet points, tables) for complex data.
         - When browsing the web, summarize what you find rather than dumping raw HTML.
+        """;
+
+    private const string RepoAreaSection =
+        """
+        Repository authoring areas:
+        - Skill root: `src/SandraMaya.Host/Assistant/Skills`
+        - Playwright helpers: `src/SandraMaya.Host/Playwright`
+        - Host entrypoint reference: `src/SandraMaya.Host/Program.cs`
+        - Host configuration reference: `src/SandraMaya.Host/Configuration`
+
+        Treat those repo-relative paths as canonical aliases for repository work.
+        Do not depend on machine-specific absolute paths because the checkout location may change.
+        Write new skills under the skill root, keep shared browser helpers under the Playwright folder,
+        and treat Program.cs and Configuration as read-mostly reference surfaces unless a code change
+        is explicitly required.
+        When a skill discovers jobs, persist them through `jobs_ingest_batch`.
         """;
 
     private string BuildToolSection()

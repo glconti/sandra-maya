@@ -113,6 +113,45 @@ public sealed class AssistantMessageRouterTests
         Assert.Equal("completed reply", dispatcher.Messages[0].Text);
     }
 
+    [Fact]
+    public async Task RouteAsync_ShutdownCancelsInFlightProcessing_AndDoesNotDispatchReply()
+    {
+        var dispatcher = new RecordingOutboundDispatcher();
+        var telegramClient = new RecordingTelegramClient();
+        var orchestrator = new CancellationAwareOrchestrator();
+        var lifetime = new TestHostApplicationLifetime();
+        var provider = new ServiceCollection()
+            .AddSingleton<IAssistantOrchestrator>(orchestrator)
+            .BuildServiceProvider();
+
+        var subject = new AssistantMessageRouter(
+            new SimpleScopeFactory(provider),
+            dispatcher,
+            new NoOpTurnRegistry(),
+            telegramClient,
+            lifetime,
+            NullLogger<AssistantMessageRouter>.Instance);
+
+        await subject.RouteAsync(
+            new InboundMessage(
+                "message-4",
+                new ConversationReference(TransportPlatforms.Telegram, "12345", "user-1"),
+                new UserReference("user-1", "agent", "Agent"),
+                "hello",
+                null,
+                [],
+                DateTimeOffset.UtcNow),
+            CancellationToken.None);
+
+        await orchestrator.WaitForStartAsync(TimeSpan.FromSeconds(5));
+        lifetime.StopApplication();
+        await orchestrator.WaitForCancellationAsync(TimeSpan.FromSeconds(5));
+
+        await Task.Delay(100);
+
+        Assert.Empty(dispatcher.Messages);
+    }
+
     private sealed class DelayedReplyOrchestrator : IAssistantOrchestrator
     {
         public async Task<AssistantTurnResult> ProcessAsync(InboundMessage message, CancellationToken cancellationToken)
@@ -122,6 +161,33 @@ public sealed class AssistantMessageRouterTests
                 "session-1",
                 [new AssistantReply("completed reply")]);
         }
+    }
+
+    private sealed class CancellationAwareOrchestrator : IAssistantOrchestrator
+    {
+        private readonly TaskCompletionSource _started = new(TaskCreationOptions.RunContinuationsAsynchronously);
+        private readonly TaskCompletionSource _cancelled = new(TaskCreationOptions.RunContinuationsAsynchronously);
+
+        public async Task<AssistantTurnResult> ProcessAsync(InboundMessage message, CancellationToken cancellationToken)
+        {
+            _started.TrySetResult();
+
+            try
+            {
+                await Task.Delay(Timeout.InfiniteTimeSpan, cancellationToken);
+            }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                _cancelled.TrySetResult();
+                throw;
+            }
+
+            throw new InvalidOperationException("ProcessAsync should have been cancelled.");
+        }
+
+        public Task WaitForStartAsync(TimeSpan timeout) => _started.Task.WaitAsync(timeout);
+
+        public Task WaitForCancellationAsync(TimeSpan timeout) => _cancelled.Task.WaitAsync(timeout);
     }
 
     private sealed class RecordingOutboundDispatcher : IOutboundMessageDispatcher
