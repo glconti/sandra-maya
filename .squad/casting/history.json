@@ -1,0 +1,48 @@
+{
+  "version": 1,
+  "assignments": [
+    {
+      "assignment_id": "20260326T220520Z-initial-sandra-maya",
+      "created_at": "2026-03-26T22:05:20.031Z",
+      "universe": "Aliens",
+      "reason": "High-pressure team with clear functional ownership for a Copilot SDK-first job-search assistant.",
+      "members": [
+        {
+          "name": "Ripley",
+          "role": "Lead",
+          "exempt": false
+        },
+        {
+          "name": "Bishop",
+          "role": "Copilot SDK Runtime",
+          "exempt": false
+        },
+        {
+          "name": "Apone",
+          "role": "Host & Platform",
+          "exempt": false
+        },
+        {
+          "name": "Hicks",
+          "role": "Career Domain",
+          "exempt": false
+        },
+        {
+          "name": "Vasquez",
+          "role": "Quality",
+          "exempt": false
+        },
+        {
+          "name": "Scribe",
+          "role": "Session Logger",
+          "exempt": true
+        },
+        {
+          "name": "Ralph",
+          "role": "Work Monitor",
+          "exempt": true
+        }
+      ]
+    }
+  ]
+}

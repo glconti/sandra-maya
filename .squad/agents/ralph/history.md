@@ -1,16 +1,10 @@
-# Project Context
-
-- **Project:** sandra-maya
-- **Created:** 2026-03-26
+# Ralph History
 
 ## Core Context
-
-Agent Ralph initialized and ready for work.
-
-## Recent Updates
-
-📌 Team initialized on 2026-03-26
+- Requested by Gianluigi Conti.
+- Project: Sandra Maya, a Copilot SDK-first AI assistant for job search workflows over Telegram.
+- Stack: .NET 10, ASP.NET Core host, GitHub Copilot SDK, SQLite, Playwright, Telegram.
+- Boundary: backlog monitoring, work-check loops, and queue health.
 
 ## Learnings
-
-Initial setup complete.
+- Ralph is always on the roster and never owns product implementation.

@@ -1,0 +1,48 @@
+{
+  "version": 1,
+  "defaultTeamSize": 5,
+  "selectionRules": {
+    "singleUniversePerAssignment": true,
+    "preserveExistingNames": true,
+    "scribeExempt": true,
+    "ralphExempt": true
+  },
+  "universes": [
+    {
+      "id": "aliens",
+      "name": "Aliens",
+      "capacity": 6,
+      "allowed": true
+    },
+    {
+      "id": "star-wars",
+      "name": "Star Wars",
+      "capacity": 12,
+      "allowed": true
+    },
+    {
+      "id": "star-trek",
+      "name": "Star Trek",
+      "capacity": 12,
+      "allowed": true
+    },
+    {
+      "id": "the-expanse",
+      "name": "The Expanse",
+      "capacity": 10,
+      "allowed": true
+    },
+    {
+      "id": "mass-effect",
+      "name": "Mass Effect",
+      "capacity": 10,
+      "allowed": true
+    },
+    {
+      "id": "foundation",
+      "name": "Foundation",
+      "capacity": 10,
+      "allowed": true
+    }
+  ]
+}

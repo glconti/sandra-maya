@@ -1,0 +1,54 @@
+{
+  "version": 1,
+  "entries": [
+    {
+      "persistent_name": "Ripley",
+      "universe": "Aliens",
+      "created_at": "2026-03-26T22:05:20.031Z",
+      "legacy_named": false,
+      "status": "active"
+    },
+    {
+      "persistent_name": "Bishop",
+      "universe": "Aliens",
+      "created_at": "2026-03-26T22:05:20.031Z",
+      "legacy_named": false,
+      "status": "active"
+    },
+    {
+      "persistent_name": "Apone",
+      "universe": "Aliens",
+      "created_at": "2026-03-26T22:05:20.031Z",
+      "legacy_named": false,
+      "status": "active"
+    },
+    {
+      "persistent_name": "Hicks",
+      "universe": "Aliens",
+      "created_at": "2026-03-26T22:05:20.031Z",
+      "legacy_named": false,
+      "status": "active"
+    },
+    {
+      "persistent_name": "Vasquez",
+      "universe": "Aliens",
+      "created_at": "2026-03-26T22:05:20.031Z",
+      "legacy_named": false,
+      "status": "active"
+    },
+    {
+      "persistent_name": "Scribe",
+      "universe": "system",
+      "created_at": "2026-03-26T22:05:20.031Z",
+      "legacy_named": false,
+      "status": "active"
+    },
+    {
+      "persistent_name": "Ralph",
+      "universe": "system",
+      "created_at": "2026-03-26T22:05:20.031Z",
+      "legacy_named": false,
+      "status": "active"
+    }
+  ]
+}

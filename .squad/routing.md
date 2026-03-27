@@ -1,39 +1,24 @@
-# Work Routing
+# Squad Routing
 
-How to decide who handles what.
+## Primary routes
 
-## Routing Table
+| Signal | Route | Why |
+| --- | --- | --- |
+| Copilot SDK runtime, skills, tools, agents, subagents, MCP, session orchestration | Bishop | Keeps SDK-native behavior in one boundary |
+| ASP.NET Core host, Telegram, DI, startup, config, secrets, health, deployment wiring | Apone | Keeps platform and runtime plumbing together |
+| Job crawling, ingestion, job tracking, applications, memory, CVs, cover letters, document flows | Hicks | Consolidates one career-domain bounded context |
+| Tests, evals, regressions, review gates | Vasquez | Single reviewer and quality owner |
+| Boundary changes, scope conflicts, architecture decisions, reviewer escalations | Ripley | Single final decision-maker |
+| Decision merges, logs, cross-agent context updates | Scribe | Preserves append-only shared state |
+| Backlog scans, issue pickup loops, keep-working mode | Ralph | Keeps work moving without blocking |
 
-| Work Type | Route To | Examples |
-|-----------|----------|----------|
-| {domain 1} | {Name} | {example tasks} |
-| {domain 2} | {Name} | {example tasks} |
-| {domain 3} | {Name} | {example tasks} |
-| Code review | {Name} | Review PRs, check quality, suggest improvements |
-| Testing | {Name} | Write tests, find edge cases, verify fixes |
-| Scope & priorities | {Name} | What to build next, trade-offs, decisions |
-| Session logging | Scribe | Automatic — never needs routing |
+## Default pairings
 
-## Issue Routing
+- Bishop + Apone: when a change spans SDK runtime and host wiring.
+- Apone + Hicks: when platform integration affects domain behavior.
+- Hicks + Vasquez: when domain work needs tests or a review gate.
+- Ripley + Vasquez: when a reviewer rejection or boundary conflict needs escalation.
 
-| Label | Action | Who |
-|-------|--------|-----|
-| `squad` | Triage: analyze issue, assign `squad:{member}` label | Lead |
-| `squad:{name}` | Pick up issue and complete the work | Named member |
+## Routing rule
 
-### How Issue Assignment Works
-
-1. When a GitHub issue gets the `squad` label, the **Lead** triages it — analyzing content, assigning the right `squad:{member}` label, and commenting with triage notes.
-2. When a `squad:{member}` label is applied, that member picks up the issue in their next session.
-3. Members can reassign by removing their label and adding another member's label.
-4. The `squad` label is the "inbox" — untriaged issues waiting for Lead review.
-
-## Rules
-
-1. **Eager by default** — spawn all agents who could usefully start work, including anticipatory downstream work.
-2. **Scribe always runs** after substantial work, always as `mode: "background"`. Never blocks.
-3. **Quick facts → coordinator answers directly.** Don't spawn an agent for "what port does the server run on?"
-4. **When two agents could handle it**, pick the one whose domain is the primary concern.
-5. **"Team, ..." → fan-out.** Spawn all relevant agents in parallel as `mode: "background"`.
-6. **Anticipate downstream work.** If a feature is being built, spawn the tester to write test cases from requirements simultaneously.
-7. **Issue-labeled work** — when a `squad:{member}` label is applied to an issue, route to that member. The Lead handles all `squad` (base label) triage.
+Prefer the smallest owner set that preserves clean boundaries. If a task can stay within one bounded context, route it to that single owner first.

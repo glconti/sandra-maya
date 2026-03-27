@@ -1,10 +1,10 @@
-# Scribe History
+# Bishop History
 
 ## Core Context
 - Requested by Gianluigi Conti.
 - Project: Sandra Maya, a Copilot SDK-first AI assistant for job search workflows over Telegram.
 - Stack: .NET 10, ASP.NET Core host, GitHub Copilot SDK, SQLite, Playwright, Telegram.
-- Boundary: decisions, orchestration logs, session logs, and cross-agent context sharing.
+- Boundary: Copilot SDK runtime, skills, tools, agents, subagents, MCP, prompt and session orchestration.
 
 ## Learnings
-- The squad uses append-only shared files and individual agent histories.
+- The team expects current knowledge of GitHub Copilot SDK primitives and AI coding agent patterns.

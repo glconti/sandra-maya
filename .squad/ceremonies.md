@@ -1,41 +1,25 @@
-# Ceremonies
+# Squad Ceremonies
 
-> Team meetings that happen before or after work. Each squad configures their own.
+## Automatic ceremonies
 
-## Design Review
+- None by default. The team starts lean and only adds auto-ceremonies when repeated work shows a clear need.
 
-| Field | Value |
-|-------|-------|
-| **Trigger** | auto |
-| **When** | before |
-| **Condition** | multi-agent task involving 2+ agents modifying shared systems |
-| **Facilitator** | lead |
-| **Participants** | all-relevant |
-| **Time budget** | focused |
-| **Enabled** | ✅ yes |
+## Manual ceremonies
 
-**Agenda:**
-1. Review the task and requirements
-2. Agree on interfaces and contracts between components
-3. Identify risks and edge cases
-4. Assign action items
+### Design review
+- When: user asks for a design meeting, or before a boundary-changing feature
+- Facilitator: Ripley
+- Participants: Bishop, Apone, Hicks, Vasquez
+- Output: approved boundary decision plus action items
 
----
+### Quality gate
+- When: user asks for review, or before shipping a risky change
+- Facilitator: Vasquez
+- Participants: work author plus Ripley when needed
+- Output: approve, reject, or reassign under reviewer lockout rules
 
-## Retrospective
-
-| Field | Value |
-|-------|-------|
-| **Trigger** | auto |
-| **When** | after |
-| **Condition** | build failure, test failure, or reviewer rejection |
-| **Facilitator** | lead |
-| **Participants** | all-involved |
-| **Time budget** | focused |
-| **Enabled** | ✅ yes |
-
-**Agenda:**
-1. What happened? (facts only)
-2. Root cause analysis
-3. What should change?
-4. Action items for next iteration
+### Backlog sync
+- When: user asks for backlog triage or issue intake
+- Facilitator: Ralph
+- Participants: Ripley plus the likely owner
+- Output: assigned work and next actions
