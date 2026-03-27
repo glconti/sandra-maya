@@ -25,6 +25,7 @@ public sealed class SystemPromptBuilder
         {
             CorePersona,
             RepoAreaSection,
+            CopilotCustomAgentProfiles.MainAssistantDelegationSection,
             BuildToolSection(),
             await BuildUserContextAsync(userId, cancellationToken)
         };

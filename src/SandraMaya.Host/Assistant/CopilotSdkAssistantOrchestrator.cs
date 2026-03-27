@@ -134,6 +134,7 @@ public sealed class CopilotSdkAssistantOrchestrator : IAssistantOrchestrator
             DisabledSkills = [],
             AvailableTools = [.. _toolRegistry.GetToolNames()],
             Tools = [.. _toolRegistry.GetToolFunctions(toolContext)],
+            CustomAgents = [.. CopilotCustomAgentProfiles.Create()],
             InfiniteSessions = new InfiniteSessionConfig
             {
                 Enabled = true
@@ -164,6 +165,7 @@ public sealed class CopilotSdkAssistantOrchestrator : IAssistantOrchestrator
             DisabledSkills = [],
             AvailableTools = [.. _toolRegistry.GetToolNames()],
             Tools = [.. _toolRegistry.GetToolFunctions(toolContext)],
+            CustomAgents = [.. CopilotCustomAgentProfiles.Create()],
             InfiniteSessions = new InfiniteSessionConfig
             {
                 Enabled = true
