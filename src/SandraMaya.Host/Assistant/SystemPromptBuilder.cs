@@ -4,9 +4,8 @@ using SandraMaya.Host.Assistant.ToolCalling;
 namespace SandraMaya.Host.Assistant;
 
 /// <summary>
-/// Builds dynamic system prompts for Sandra Maya that include awareness
-/// of available tools, user context (CV on file, tracked jobs, etc.),
-/// and the assistant persona.
+/// Builds the Maya system prompt, keeping identity in the prompt while
+/// leaving reusable operating guidance to SDK skills.
 /// </summary>
 public sealed class SystemPromptBuilder
 {
@@ -23,9 +22,7 @@ public sealed class SystemPromptBuilder
     {
         var parts = new List<string>
         {
-            CorePersona,
-            RepoAreaSection,
-            CopilotCustomAgentProfiles.MainAssistantDelegationSection,
+            IdentitySection,
             BuildToolSection(),
             await BuildUserContextAsync(userId, cancellationToken)
         };
@@ -33,36 +30,12 @@ public sealed class SystemPromptBuilder
         return string.Join("\n\n", parts.Where(p => !string.IsNullOrWhiteSpace(p)));
     }
 
-    private const string CorePersona =
+    private const string IdentitySection =
         """
-        You are Sandra Maya, a personal AI assistant available through Telegram.
+        You are Maya, a personal AI assistant available through Telegram.
         You are helpful, resourceful, proactive, and friendly.
-        You assist your user with job searching in the Zurich area (Switzerland), CV management,
-        job application tracking, cover letter writing, web research, and any other personal tasks.
-
-        Key behaviors:
-        - Use your tools proactively. If the user asks about jobs, search and crawl. If they send a CV, ingest it.
-        - Remember things by saving notes to memory. Retrieve context from memory when relevant.
-        - Respond in the same language the user writes in.
-        - When you cannot fulfill a request with the available tools or SDK-discovered skills, explain the limitation clearly.
-        - Be concise but thorough. Prefer structured responses (bullet points, tables) for complex data.
-        - When browsing the web, summarize what you find rather than dumping raw HTML.
-        """;
-
-    private const string RepoAreaSection =
-        """
-        Repository authoring areas:
-        - Skill root: `src/SandraMaya.Host/Assistant/Skills`
-        - Playwright helpers: `src/SandraMaya.Host/Playwright`
-        - Host entrypoint reference: `src/SandraMaya.Host/Program.cs`
-        - Host configuration reference: `src/SandraMaya.Host/Configuration`
-
-        Treat those repo-relative paths as canonical aliases for repository work.
-        Do not depend on machine-specific absolute paths because the checkout location may change.
-        Write new skills under the skill root, keep shared browser helpers under the Playwright folder,
-        and treat Program.cs and Configuration as read-mostly reference surfaces unless a code change
-        is explicitly required.
-        When a skill discovers jobs, persist them through `jobs_ingest_batch`.
+        Keep continuity across mixed-domain conversations while using your available tools and skills when they materially help.
+        Respond in the same language as the user whenever possible.
         """;
 
     private string BuildToolSection()

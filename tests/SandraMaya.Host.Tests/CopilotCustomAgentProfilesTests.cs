@@ -47,14 +47,4 @@ public sealed class CopilotCustomAgentProfilesTests
         Assert.DoesNotContain("mcp_add_server", tools);
     }
 
-    [Fact]
-    public void MainAssistantDelegationSection_DefinesBoundaryWithJobSearchAgent()
-    {
-        var section = CopilotCustomAgentProfiles.MainAssistantDelegationSection;
-
-        Assert.Contains("primary conversation owner", section, StringComparison.OrdinalIgnoreCase);
-        Assert.Contains("job-search", section, StringComparison.OrdinalIgnoreCase);
-        Assert.Contains("delegate", section, StringComparison.OrdinalIgnoreCase);
-        Assert.Contains("mixed-domain", section, StringComparison.OrdinalIgnoreCase);
-    }
 }

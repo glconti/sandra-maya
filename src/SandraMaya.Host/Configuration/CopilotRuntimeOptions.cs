@@ -23,7 +23,7 @@ public sealed class CopilotRuntimeOptions
 
     public string? WorkingDirectory { get; init; }
 
-    public string ClientName { get; init; } = "Sandra Maya";
+    public string ClientName { get; init; } = "Maya";
 
     public bool HasExplicitModel =>
         !string.IsNullOrWhiteSpace(Model);

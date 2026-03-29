@@ -68,7 +68,7 @@ public sealed class CopilotRuntimeConfiguration
 
     private string ResolveClientName() =>
         string.IsNullOrWhiteSpace(_copilotOptions.ClientName)
-            ? "Sandra Maya"
+            ? "Maya"
             : _copilotOptions.ClientName;
 
     private static ProviderConfig BuildProviderConfig(AzureOpenAiOptions options)

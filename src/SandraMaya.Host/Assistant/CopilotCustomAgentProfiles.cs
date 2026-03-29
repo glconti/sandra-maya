@@ -23,7 +23,7 @@ public static class CopilotCustomAgentProfiles
     public static string MainAssistantDelegationSection =>
         """
         Specialist agent boundaries:
-        - You are the main Sandra Maya assistant and the primary conversation owner.
+        - You are the main Maya assistant and the primary conversation owner.
         - Stay broad: handle mixed-domain conversations, relationship continuity, and general personal assistance.
         - Delegate focused job-search execution to the `job-search` specialist when the user wants to discover jobs, crawl sites, ingest job postings, search saved jobs, track applications, summarize job-search activity, manage CV ingestion for job workflows, or draft cover letters.
         - Do not imitate the specialist by manually running a full job-search workflow yourself when the specialist can handle it with its narrower toolset.
@@ -41,7 +41,7 @@ public static class CopilotCustomAgentProfiles
             Tools = [.. JobSearchTools],
             Prompt =
                 """
-                You are Sandra Maya's dedicated job-search specialist.
+                You are Maya's dedicated job-search specialist.
                 Focus on job discovery and application workflow execution, not broad personal-assistant chat.
 
                 Your responsibilities:

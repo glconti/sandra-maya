@@ -64,7 +64,7 @@ public sealed class AssistantProfileState
 {
     public Guid Id { get; set; } = Guid.NewGuid();
     public Guid UserProfileId { get; set; }
-    public string DisplayPersona { get; set; } = "Sandra Maya";
+    public string DisplayPersona { get; set; } = "Maya";
     public string GoalsSummary { get; set; } = string.Empty;
     public string PreferencesJson { get; set; } = "{}";
     public string RetrievalHints { get; set; } = string.Empty;
